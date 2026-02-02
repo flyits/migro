@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Migro 快速入门指南 - 5 分钟学会使用 Go 数据库迁移工具">
+  <title>快速入门 - Migro 文档</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="header-logo">
+        <img src="assets/logo.svg" alt="Migro Logo" width="32" height="32">
+        <span>Migro</span>
+      </a>
+    </div>
+    <div class="header-right">
+      <a href="https://github.com/flyits/migro" class="header-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <nav class="nav">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link">首页</a>
+        </li>
+        <li class="nav-item">
+          <a href="getting-started.html" class="nav-link active">快速入门</a>
+        </li>
+        <li class="nav-item">
+          <a href="cli-reference.html" class="nav-link">CLI 命令参考</a>
+        </li>
+        <li class="nav-item has-submenu">
+          <a href="schema-api.html" class="nav-link">
+            Schema API
+            <span class="nav-arrow">▼</span>
+          </a>
+          <ul class="nav-submenu">
+            <li><a href="schema-api.html#table-builder" class="nav-link">Table 构建器</a></li>
+            <li><a href="schema-api.html#column-types" class="nav-link">列类型</a></li>
+            <li><a href="schema-api.html#column-modifiers" class="nav-link">列修饰符</a></li>
+            <li><a href="schema-api.html#indexes" class="nav-link">索引</a></li>
+            <li><a href="schema-api.html#foreign-keys" class="nav-link">外键</a></li>
+            <li><a href="schema-api.html#alter-table" class="nav-link">ALTER TABLE</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a href="configuration.html" class="nav-link">配置指南</a>
+        </li>
+        <li class="nav-item">
+          <a href="database-support.html" class="nav-link">数据库支持</a>
+        </li>
+        <li class="nav-item">
+          <a href="best-practices.html" class="nav-link">最佳实践</a>
+        </li>
+        <li class="nav-item">
+          <a href="examples.html" class="nav-link">示例代码</a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Overlay -->
+  <div class="overlay"></div>
+
+  <!-- Main Content -->
+  <main class="content">
+    <article class="article">
+      <h1>快速入门</h1>
+      <p>本指南将帮助你快速上手 Migro，完成第一个数据库迁移。</p>
+
+      <!-- TOC -->
+      <div class="toc">
+        <div class="toc-title">目录</div>
+        <ul class="toc-list">
+          <li><a href="#installation">1. 安装</a></li>
+          <li><a href="#init">2. 初始化项目</a></li>
+          <li><a href="#create">3. 创建迁移文件</a></li>
+          <li><a href="#write">4. 编写迁移</a></li>
+          <li><a href="#run">5. 执行迁移</a></li>
+          <li><a href="#status">6. 查看状态</a></li>
+        </ul>
+      </div>
+
+      <h2 id="installation" class="section-anchor">1. 安装</h2>
+      <p>使用 Go 安装 Migro CLI 工具：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">go install github.com/flyits/migro/cmd/migro@latest</code></pre>
+      </div>
+
+      <p>验证安装：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">migro --version</code></pre>
+      </div>
+
+      <h2 id="init" class="section-anchor">2. 初始化项目</h2>
+      <p>在项目根目录执行初始化命令：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">migro init --driver mysql</code></pre>
+      </div>
+
+      <p>这将创建以下文件和目录：</p>
+      <ul>
+        <li><code>migro.yaml</code> - 配置文件</li>
+        <li><code>migrations/</code> - 迁移文件目录</li>
+      </ul>
+
+      <div class="callout info">
+        <div class="callout-title">💡 提示</div>
+        <div class="callout-content">
+          <p>支持的数据库驱动：<code>mysql</code>、<code>postgres</code>、<code>sqlite</code></p>
+        </div>
+      </div>
+
+      <h2 id="create" class="section-anchor">3. 创建迁移文件</h2>
+      <p>使用 <code>create</code> 命令创建新的迁移文件：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">migro create create_users_table</code></pre>
+      </div>
+
+      <p>这将在 <code>migrations/</code> 目录下生成一个带时间戳的文件：</p>
+      <pre><code>migrations/20260202150405_create_users_table.go</code></pre>
+
+      <h2 id="write" class="section-anchor">4. 编写迁移</h2>
+      <p>打开生成的迁移文件，编写 <code>Up</code> 和 <code>Down</code> 方法：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">package migrations
+
+import (
+    "context"
+    "github.com/flyits/migro/internal/migrator"
+    "github.com/flyits/migro/pkg/schema"
+)
+
+type CreateUsersTable struct{}
+
+func (m *CreateUsersTable) Name() string {
+    return "20260202150405_create_users_table"
+}
+
+func (m *CreateUsersTable) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.CreateTable(ctx, "users", func(t *schema.Table) {
+        t.ID()
+        t.String("name", 100)
+        t.String("email", 100).Unique()
+        t.String("password", 255)
+        t.Timestamps()
+    })
+}
+
+func (m *CreateUsersTable) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.DropTableIfExists(ctx, "users")
+}</code></pre>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠️ 重要</div>
+        <div class="callout-content">
+          <p>始终编写 <code>Down</code> 方法，确保迁移可以回滚。</p>
+        </div>
+      </div>
+
+      <h2 id="run" class="section-anchor">5. 执行迁移</h2>
+      <p>运行迁移：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">migro up</code></pre>
+      </div>
+
+      <p>预览 SQL 而不执行（Dry Run 模式）：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">migro up --dry-run</code></pre>
+      </div>
+
+      <h2 id="status" class="section-anchor">6. 查看状态</h2>
+      <p>查看迁移执行状态：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">migro status</code></pre>
+      </div>
+
+      <p>输出示例：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-bash">+----+----------------------------------------+-------+---------------------+
+| #  | Migration                              | Batch | Executed At         |
++----+----------------------------------------+-------+---------------------+
+| 1  | 20260202150405_create_users_table      | 1     | 2026-02-02 15:04:05 |
++----+----------------------------------------+-------+---------------------+</code></pre>
+      </div>
+
+      <hr>
+
+      <h2>下一步</h2>
+      <div class="quick-links">
+        <a href="cli-reference.html" class="quick-link">📖 CLI 命令参考</a>
+        <a href="schema-api.html" class="quick-link">🔧 Schema API</a>
+        <a href="configuration.html" class="quick-link">⚙️ 配置指南</a>
+        <a href="examples.html" class="quick-link">💡 更多示例</a>
+      </div>
+    </article>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Migro &copy; 2026 | <a href="https://github.com/flyits/migro">GitHub</a> | MIT License</p>
+    </footer>
+  </main>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

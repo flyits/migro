@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Migro CLI 命令参考 - 所有命令和参数的完整文档">
+  <title>CLI 命令参考 - Migro 文档</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="header-logo">
+        <img src="assets/logo.svg" alt="Migro Logo" width="32" height="32">
+        <span>Migro</span>
+      </a>
+    </div>
+    <div class="header-right">
+      <a href="https://github.com/flyits/migro" class="header-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <nav class="nav">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link">首页</a>
+        </li>
+        <li class="nav-item">
+          <a href="getting-started.html" class="nav-link">快速入门</a>
+        </li>
+        <li class="nav-item">
+          <a href="cli-reference.html" class="nav-link active">CLI 命令参考</a>
+        </li>
+        <li class="nav-item has-submenu">
+          <a href="schema-api.html" class="nav-link">
+            Schema API
+            <span class="nav-arrow">▼</span>
+          </a>
+          <ul class="nav-submenu">
+            <li><a href="schema-api.html#table-builder" class="nav-link">Table 构建器</a></li>
+            <li><a href="schema-api.html#column-types" class="nav-link">列类型</a></li>
+            <li><a href="schema-api.html#column-modifiers" class="nav-link">列修饰符</a></li>
+            <li><a href="schema-api.html#indexes" class="nav-link">索引</a></li>
+            <li><a href="schema-api.html#foreign-keys" class="nav-link">外键</a></li>
+            <li><a href="schema-api.html#alter-table" class="nav-link">ALTER TABLE</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a href="configuration.html" class="nav-link">配置指南</a>
+        </li>
+        <li class="nav-item">
+          <a href="database-support.html" class="nav-link">数据库支持</a>
+        </li>
+        <li class="nav-item">
+          <a href="best-practices.html" class="nav-link">最佳实践</a>
+        </li>
+        <li class="nav-item">
+          <a href="examples.html" class="nav-link">示例代码</a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Overlay -->
+  <div class="overlay"></div>
+
+  <!-- Main Content -->
+  <main class="content">
+    <article class="article">
+      <h1>CLI 命令参考</h1>
+      <p>Migro 提供了一组简洁的命令行工具来管理数据库迁移。</p>
+
+      <!-- TOC -->
+      <div class="toc">
+        <div class="toc-title">命令列表</div>
+        <ul class="toc-list">
+          <li><a href="#init">migro init</a></li>
+          <li><a href="#create">migro create</a></li>
+          <li><a href="#up">migro up</a></li>
+          <li><a href="#down">migro down</a></li>
+          <li><a href="#status">migro status</a></li>
+          <li><a href="#reset">migro reset</a></li>
+          <li><a href="#refresh">migro refresh</a></li>
+        </ul>
+      </div>
+
+      <!-- migro init -->
+      <section class="api-method">
+        <h2 id="init" class="section-anchor">migro init</h2>
+        <p>初始化迁移环境，创建配置文件和迁移目录。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro init [flags]</code></pre>
+        </div>
+
+        <h4>参数</h4>
+        <div class="table-wrapper">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>说明</th>
+                <th>默认值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--driver</code></td>
+                <td>数据库驱动 (mysql/postgres/sqlite)</td>
+                <td>mysql</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>示例</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash"># 使用 MySQL 初始化
+migro init --driver mysql
+
+# 使用 PostgreSQL 初始化
+migro init --driver postgres
+
+# 使用 SQLite 初始化
+migro init --driver sqlite</code></pre>
+        </div>
+      </section>
+
+      <!-- migro create -->
+      <section class="api-method">
+        <h2 id="create" class="section-anchor">migro create</h2>
+        <p>创建新的迁移文件。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro create &lt;name&gt; [flags]</code></pre>
+        </div>
+
+        <h4>参数</h4>
+        <div class="table-wrapper">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>说明</th>
+                <th>默认值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--table</code></td>
+                <td>指定表名（用于生成模板）</td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>示例</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash"># 创建表迁移
+migro create create_users_table
+
+# 创建修改表迁移（指定表名）
+migro create add_phone_to_users --table users</code></pre>
+        </div>
+      </section>
+
+      <!-- migro up -->
+      <section class="api-method">
+        <h2 id="up" class="section-anchor">migro up</h2>
+        <p>执行待执行的迁移。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro up [flags]</code></pre>
+        </div>
+
+        <h4>参数</h4>
+        <div class="table-wrapper">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>说明</th>
+                <th>默认值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--step</code></td>
+                <td>执行指定数量的迁移</td>
+                <td>0 (全部)</td>
+              </tr>
+              <tr>
+                <td><code>--dry-run</code></td>
+                <td>预览 SQL 而不执行</td>
+                <td>false</td>
+              </tr>
+              <tr>
+                <td><code>--force</code></td>
+                <td>跳过确认提示</td>
+                <td>false</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>示例</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash"># 执行所有待执行迁移
+migro up
+
+# 只执行一个迁移
+migro up --step=1
+
+# 预览 SQL（不执行）
+migro up --dry-run
+
+# 强制执行（跳过确认）
+migro up --force</code></pre>
+        </div>
+      </section>
+
+      <!-- migro down -->
+      <section class="api-method">
+        <h2 id="down" class="section-anchor">migro down</h2>
+        <p>回滚迁移。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro down [flags]</code></pre>
+        </div>
+
+        <h4>参数</h4>
+        <div class="table-wrapper">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>说明</th>
+                <th>默认值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--step</code></td>
+                <td>回滚指定数量的迁移</td>
+                <td>0 (最后一批)</td>
+              </tr>
+              <tr>
+                <td><code>--force</code></td>
+                <td>跳过确认提示</td>
+                <td>false</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>示例</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash"># 回滚最后一批迁移
+migro down
+
+# 回滚最近 3 个迁移
+migro down --step=3
+
+# 强制回滚（跳过确认）
+migro down --force</code></pre>
+        </div>
+      </section>
+
+      <!-- migro status -->
+      <section class="api-method">
+        <h2 id="status" class="section-anchor">migro status</h2>
+        <p>显示迁移状态。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro status</code></pre>
+        </div>
+
+        <h4>输出示例</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">+----+----------------------------------------+-------+---------------------+
+| #  | Migration                              | Batch | Executed At         |
++----+----------------------------------------+-------+---------------------+
+| 1  | 20260202150405_create_users_table      | 1     | 2026-02-02 15:04:05 |
+| 2  | 20260202150410_create_posts_table      | 1     | 2026-02-02 15:04:10 |
+| 3  | 20260202150415_add_phone_to_users      | -     | Pending             |
++----+----------------------------------------+-------+---------------------+</code></pre>
+        </div>
+      </section>
+
+      <!-- migro reset -->
+      <section class="api-method">
+        <h2 id="reset" class="section-anchor">migro reset</h2>
+        <p>回滚所有迁移。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro reset [flags]</code></pre>
+        </div>
+
+        <h4>参数</h4>
+        <div class="table-wrapper">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>说明</th>
+                <th>默认值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--force</code></td>
+                <td>跳过确认提示</td>
+                <td>false</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-title">⚠️ 危险操作</div>
+          <div class="callout-content">
+            <p>此命令会回滚所有迁移，请谨慎使用。建议在生产环境使用 <code>--force</code> 前先确认。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- migro refresh -->
+      <section class="api-method">
+        <h2 id="refresh" class="section-anchor">migro refresh</h2>
+        <p>回滚所有迁移并重新执行。</p>
+
+        <h4>用法</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="code-copy">Copy</button>
+          </div>
+          <pre><code class="language-bash">migro refresh [flags]</code></pre>
+        </div>
+
+        <h4>参数</h4>
+        <div class="table-wrapper">
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>参数</th>
+                <th>说明</th>
+                <th>默认值</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--force</code></td>
+                <td>跳过确认提示</td>
+                <td>false</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          <div class="callout-title">⚠️ 注意</div>
+          <div class="callout-content">
+            <p>此命令会删除所有数据并重建表结构，通常用于开发环境。</p>
+          </div>
+        </div>
+      </section>
+    </article>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Migro &copy; 2026 | <a href="https://github.com/flyits/migro">GitHub</a> | MIT License</p>
+    </footer>
+  </main>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

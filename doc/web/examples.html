@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Migro 示例代码 - 完整的迁移示例">
+  <title>示例代码 - Migro 文档</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="header-logo">
+        <img src="assets/logo.svg" alt="Migro Logo" width="32" height="32">
+        <span>Migro</span>
+      </a>
+    </div>
+    <div class="header-right">
+      <a href="https://github.com/flyits/migro" class="header-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <nav class="nav">
+      <ul class="nav-list">
+        <li class="nav-item"><a href="index.html" class="nav-link">首页</a></li>
+        <li class="nav-item"><a href="getting-started.html" class="nav-link">快速入门</a></li>
+        <li class="nav-item"><a href="cli-reference.html" class="nav-link">CLI 命令参考</a></li>
+        <li class="nav-item has-submenu">
+          <a href="schema-api.html" class="nav-link">Schema API<span class="nav-arrow">▼</span></a>
+          <ul class="nav-submenu">
+            <li><a href="schema-api.html#table-builder" class="nav-link">Table 构建器</a></li>
+            <li><a href="schema-api.html#column-types" class="nav-link">列类型</a></li>
+            <li><a href="schema-api.html#column-modifiers" class="nav-link">列修饰符</a></li>
+            <li><a href="schema-api.html#indexes" class="nav-link">索引</a></li>
+            <li><a href="schema-api.html#foreign-keys" class="nav-link">外键</a></li>
+            <li><a href="schema-api.html#alter-table" class="nav-link">ALTER TABLE</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a href="configuration.html" class="nav-link">配置指南</a></li>
+        <li class="nav-item"><a href="database-support.html" class="nav-link">数据库支持</a></li>
+        <li class="nav-item"><a href="best-practices.html" class="nav-link">最佳实践</a></li>
+        <li class="nav-item"><a href="examples.html" class="nav-link active">示例代码</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="overlay"></div>
+
+  <main class="content">
+    <article class="article">
+      <h1>示例代码</h1>
+      <p>以下是一些常见的迁移示例，帮助你快速上手。</p>
+
+      <h2 id="create-users" class="section-anchor">创建用户表</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">func (m *CreateUsersTable) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.CreateTable(ctx, "users", func(t *schema.Table) {
+        t.ID()
+        t.String("name", 100)
+        t.String("email", 100).Unique()
+        t.String("password", 255)
+        t.String("phone", 20).Nullable()
+        t.Boolean("is_active").Default(true)
+        t.Timestamps()
+        t.SoftDeletes()
+
+        t.Index("email")
+        t.Index("phone")
+    })
+}
+
+func (m *CreateUsersTable) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.DropTableIfExists(ctx, "users")
+}</code></pre>
+      </div>
+
+      <h2 id="create-posts" class="section-anchor">创建文章表（带外键）</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">func (m *CreatePostsTable) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.CreateTable(ctx, "posts", func(t *schema.Table) {
+        t.ID()
+        t.BigInteger("user_id").Unsigned()
+        t.String("title", 200)
+        t.Text("content")
+        t.String("status", 20).Default("draft")
+        t.Timestamps()
+
+        t.Index("user_id")
+        t.Index("status")
+        t.Foreign("user_id").References("users", "id").OnDeleteCascade()
+    })
+}
+
+func (m *CreatePostsTable) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.DropTableIfExists(ctx, "posts")
+}</code></pre>
+      </div>
+
+      <h2 id="add-column" class="section-anchor">添加列</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">func (m *AddAvatarToUsers) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "users", func(t *schema.Table) {
+        t.String("avatar", 255).Nullable()
+    })
+}
+
+func (m *AddAvatarToUsers) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "users", func(t *schema.Table) {
+        t.DropColumn("avatar")
+    })
+}</code></pre>
+      </div>
+
+      <h2 id="modify-column" class="section-anchor">修改列类型</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">func (m *ModifyColumnsInUsers) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "users", func(t *schema.Table) {
+        t.ChangeText("bio")                              // VARCHAR -> TEXT
+        t.ChangeBigInteger("follower_count").Unsigned()  // INT -> BIGINT UNSIGNED
+        t.ChangeString("username", 100).Unique()         // 修改长度并添加唯一约束
+    })
+}
+
+func (m *ModifyColumnsInUsers) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "users", func(t *schema.Table) {
+        t.ChangeString("bio", 500)
+        t.ChangeInteger("follower_count")
+        t.ChangeString("username", 50)
+    })
+}</code></pre>
+      </div>
+
+      <h2 id="add-index" class="section-anchor">添加索引</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">func (m *AddIndexToPosts) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "posts", func(t *schema.Table) {
+        t.Index("created_at").Named("idx_posts_created_at")
+        t.Index("user_id", "status").Named("idx_posts_user_status")
+    })
+}
+
+func (m *AddIndexToPosts) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "posts", func(t *schema.Table) {
+        t.DropIndex("idx_posts_created_at")
+        t.DropIndex("idx_posts_user_status")
+    })
+}</code></pre>
+      </div>
+
+      <h2 id="pivot-table" class="section-anchor">创建多对多关联表</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">func (m *CreatePostTagTable) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.CreateTable(ctx, "post_tag", func(t *schema.Table) {
+        t.BigInteger("post_id").Unsigned()
+        t.BigInteger("tag_id").Unsigned()
+        t.Timestamp("created_at").Nullable()
+
+        t.Primary("post_id", "tag_id")
+        t.Foreign("post_id").References("posts", "id").OnDeleteCascade()
+        t.Foreign("tag_id").References("tags", "id").OnDeleteCascade()
+    })
+}
+
+func (m *CreatePostTagTable) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.DropTableIfExists(ctx, "post_tag")
+}</code></pre>
+      </div>
+    </article>
+
+    <footer class="footer">
+      <p>Migro &copy; 2026 | <a href="https://github.com/flyits/migro">GitHub</a> | MIT License</p>
+    </footer>
+  </main>
+
+  <button class="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

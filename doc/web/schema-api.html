@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Migro Schema DSL API - 表构建器、列类型、索引、外键完整文档">
+  <title>Schema API - Migro 文档</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="header-logo">
+        <img src="assets/logo.svg" alt="Migro Logo" width="32" height="32">
+        <span>Migro</span>
+      </a>
+    </div>
+    <div class="header-right">
+      <a href="https://github.com/flyits/migro" class="header-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <nav class="nav">
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a href="index.html" class="nav-link">首页</a>
+        </li>
+        <li class="nav-item">
+          <a href="getting-started.html" class="nav-link">快速入门</a>
+        </li>
+        <li class="nav-item">
+          <a href="cli-reference.html" class="nav-link">CLI 命令参考</a>
+        </li>
+        <li class="nav-item has-submenu expanded">
+          <a href="schema-api.html" class="nav-link active">
+            Schema API
+            <span class="nav-arrow">▼</span>
+          </a>
+          <ul class="nav-submenu">
+            <li><a href="schema-api.html#table-builder" class="nav-link">Table 构建器</a></li>
+            <li><a href="schema-api.html#column-types" class="nav-link">列类型</a></li>
+            <li><a href="schema-api.html#column-modifiers" class="nav-link">列修饰符</a></li>
+            <li><a href="schema-api.html#indexes" class="nav-link">索引</a></li>
+            <li><a href="schema-api.html#foreign-keys" class="nav-link">外键</a></li>
+            <li><a href="schema-api.html#alter-table" class="nav-link">ALTER TABLE</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a href="configuration.html" class="nav-link">配置指南</a>
+        </li>
+        <li class="nav-item">
+          <a href="database-support.html" class="nav-link">数据库支持</a>
+        </li>
+        <li class="nav-item">
+          <a href="best-practices.html" class="nav-link">最佳实践</a>
+        </li>
+        <li class="nav-item">
+          <a href="examples.html" class="nav-link">示例代码</a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Overlay -->
+  <div class="overlay"></div>
+
+  <!-- Main Content -->
+  <main class="content">
+    <article class="article">
+      <h1>Schema DSL API</h1>
+      <p>Migro 提供了流畅的链式 API 来定义数据库表结构，风格类似 Laravel 的 Schema Builder。</p>
+
+      <!-- TOC -->
+      <div class="toc">
+        <div class="toc-title">目录</div>
+        <ul class="toc-list">
+          <li><a href="#table-builder">Table 构建器</a></li>
+          <li><a href="#column-types">列类型</a></li>
+          <li><a href="#column-modifiers">列修饰符</a></li>
+          <li><a href="#indexes">索引</a></li>
+          <li><a href="#foreign-keys">外键</a></li>
+          <li><a href="#alter-table">ALTER TABLE</a></li>
+          <li><a href="#mysql-options">MySQL 专用选项</a></li>
+          <li><a href="#raw-sql">原生 SQL</a></li>
+        </ul>
+      </div>
+
+      <!-- Table Builder -->
+      <h2 id="table-builder" class="section-anchor">Table 构建器</h2>
+
+      <h3>创建表</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.CreateTable(ctx, "users", func(t *schema.Table) {
+    // 定义列、索引、外键
+})</code></pre>
+      </div>
+
+      <h3>修改表</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.AlterTable(ctx, "users", func(t *schema.Table) {
+    // 添加、修改、删除列
+})</code></pre>
+      </div>
+
+      <h3>删除表</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.DropTable(ctx, "users")
+e.DropTableIfExists(ctx, "users")</code></pre>
+      </div>
+
+      <h3>重命名表</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.RenameTable(ctx, "old_name", "new_name")</code></pre>
+      </div>
+
+      <h3>检查表是否存在</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">exists, err := e.HasTable(ctx, "users")</code></pre>
+      </div>
+
+      <hr>
+
+      <!-- Column Types -->
+      <h2 id="column-types" class="section-anchor">列类型</h2>
+      <p>Migro 支持多种列类型，并自动处理不同数据库的类型映射。</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>说明</th>
+              <th>MySQL</th>
+              <th>PostgreSQL</th>
+              <th>SQLite</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ID()</code></td>
+              <td>自增主键</td>
+              <td>BIGINT UNSIGNED AUTO_INCREMENT</td>
+              <td>BIGSERIAL</td>
+              <td>INTEGER PRIMARY KEY AUTOINCREMENT</td>
+            </tr>
+            <tr>
+              <td><code>String(name, length)</code></td>
+              <td>字符串</td>
+              <td>VARCHAR(length)</td>
+              <td>VARCHAR(length)</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>Text(name)</code></td>
+              <td>长文本</td>
+              <td>TEXT</td>
+              <td>TEXT</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>Integer(name)</code></td>
+              <td>整数</td>
+              <td>INT</td>
+              <td>INTEGER</td>
+              <td>INTEGER</td>
+            </tr>
+            <tr>
+              <td><code>BigInteger(name)</code></td>
+              <td>大整数</td>
+              <td>BIGINT</td>
+              <td>BIGINT</td>
+              <td>INTEGER</td>
+            </tr>
+            <tr>
+              <td><code>SmallInteger(name)</code></td>
+              <td>小整数</td>
+              <td>SMALLINT</td>
+              <td>SMALLINT</td>
+              <td>INTEGER</td>
+            </tr>
+            <tr>
+              <td><code>TinyInteger(name)</code></td>
+              <td>微整数</td>
+              <td>TINYINT</td>
+              <td>SMALLINT</td>
+              <td>INTEGER</td>
+            </tr>
+            <tr>
+              <td><code>Float(name)</code></td>
+              <td>浮点数</td>
+              <td>FLOAT</td>
+              <td>REAL</td>
+              <td>REAL</td>
+            </tr>
+            <tr>
+              <td><code>Double(name)</code></td>
+              <td>双精度</td>
+              <td>DOUBLE</td>
+              <td>DOUBLE PRECISION</td>
+              <td>REAL</td>
+            </tr>
+            <tr>
+              <td><code>Decimal(name, p, s)</code></td>
+              <td>定点数</td>
+              <td>DECIMAL(p,s)</td>
+              <td>DECIMAL(p,s)</td>
+              <td>REAL</td>
+            </tr>
+            <tr>
+              <td><code>Boolean(name)</code></td>
+              <td>布尔值</td>
+              <td>TINYINT(1)</td>
+              <td>BOOLEAN</td>
+              <td>INTEGER</td>
+            </tr>
+            <tr>
+              <td><code>Date(name)</code></td>
+              <td>日期</td>
+              <td>DATE</td>
+              <td>DATE</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>DateTime(name)</code></td>
+              <td>日期时间</td>
+              <td>DATETIME</td>
+              <td>TIMESTAMP</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>Timestamp(name)</code></td>
+              <td>时间戳</td>
+              <td>TIMESTAMP</td>
+              <td>TIMESTAMP</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>Time(name)</code></td>
+              <td>时间</td>
+              <td>TIME</td>
+              <td>TIME</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>JSON(name)</code></td>
+              <td>JSON</td>
+              <td>JSON</td>
+              <td>JSONB</td>
+              <td>TEXT</td>
+            </tr>
+            <tr>
+              <td><code>Binary(name)</code></td>
+              <td>二进制</td>
+              <td>BLOB</td>
+              <td>BYTEA</td>
+              <td>BLOB</td>
+            </tr>
+            <tr>
+              <td><code>UUID(name)</code></td>
+              <td>UUID</td>
+              <td>CHAR(36)</td>
+              <td>UUID</td>
+              <td>TEXT</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>便捷方法</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">// 添加 created_at 和 updated_at 列
+t.Timestamps()
+
+// 添加 deleted_at 列（软删除）
+t.SoftDeletes()</code></pre>
+      </div>
+
+      <hr>
+
+      <!-- Column Modifiers -->
+      <h2 id="column-modifiers" class="section-anchor">列修饰符</h2>
+      <p>所有列方法返回 <code>*Column</code>，支持链式调用：</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">t.String("email", 100).Nullable().Unique().Default("").Comment("用户邮箱")</code></pre>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Nullable()</code></td>
+              <td>允许 NULL 值</td>
+            </tr>
+            <tr>
+              <td><code>Default(value)</code></td>
+              <td>设置默认值</td>
+            </tr>
+            <tr>
+              <td><code>Unsigned()</code></td>
+              <td>无符号（仅数值类型）</td>
+            </tr>
+            <tr>
+              <td><code>AutoIncrement()</code></td>
+              <td>自增</td>
+            </tr>
+            <tr>
+              <td><code>Primary()</code></td>
+              <td>主键</td>
+            </tr>
+            <tr>
+              <td><code>Unique()</code></td>
+              <td>唯一约束</td>
+            </tr>
+            <tr>
+              <td><code>Comment(text)</code></td>
+              <td>列注释</td>
+            </tr>
+            <tr>
+              <td><code>PlaceAfter(column)</code></td>
+              <td>放在指定列后（MySQL）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr>
+
+      <!-- Indexes -->
+      <h2 id="indexes" class="section-anchor">索引</h2>
+
+      <h3>创建索引</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">// 普通索引
+t.Index("email")
+t.Index("first_name", "last_name")  // 复合索引
+
+// 唯一索引
+t.Unique("email")
+
+// 主键（复合）
+t.Primary("user_id", "role_id")
+
+// 命名索引
+t.Index("email").Named("idx_users_email")
+
+// 全文索引（MySQL）
+t.Index("content").Fulltext()</code></pre>
+      </div>
+
+      <h3>删除索引</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.AlterTable(ctx, "users", func(t *schema.Table) {
+    t.DropIndex("idx_users_email")
+})</code></pre>
+      </div>
+
+      <hr>
+
+      <!-- Foreign Keys -->
+      <h2 id="foreign-keys" class="section-anchor">外键</h2>
+
+      <h3>创建外键</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">// 基本外键
+t.Foreign("user_id").References("users", "id")
+
+// 带级联操作
+t.Foreign("user_id").
+    References("users", "id").
+    OnDeleteCascade().
+    OnUpdateCascade()
+
+// 命名外键
+t.Foreign("user_id").
+    Named("fk_posts_user").
+    References("users", "id")</code></pre>
+      </div>
+
+      <h3>外键动作</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>OnDeleteCascade()</code></td>
+              <td>删除时级联删除</td>
+            </tr>
+            <tr>
+              <td><code>OnDeleteSetNull()</code></td>
+              <td>删除时设为 NULL</td>
+            </tr>
+            <tr>
+              <td><code>OnDeleteRestrict()</code></td>
+              <td>删除时限制（默认）</td>
+            </tr>
+            <tr>
+              <td><code>OnUpdateCascade()</code></td>
+              <td>更新时级联更新</td>
+            </tr>
+            <tr>
+              <td><code>OnUpdateSetNull()</code></td>
+              <td>更新时设为 NULL</td>
+            </tr>
+            <tr>
+              <td><code>OnUpdateRestrict()</code></td>
+              <td>更新时限制（默认）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>删除外键</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.AlterTable(ctx, "posts", func(t *schema.Table) {
+    t.DropForeign("fk_posts_user")
+})</code></pre>
+      </div>
+
+      <hr>
+
+      <!-- ALTER TABLE -->
+      <h2 id="alter-table" class="section-anchor">ALTER TABLE 操作</h2>
+
+      <h3>综合示例</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.AlterTable(ctx, "users", func(t *schema.Table) {
+    // 添加列
+    t.String("phone", 20).Nullable()
+
+    // 删除列
+    t.DropColumn("old_column")
+
+    // 重命名列
+    t.RenameColumn("old_name", "new_name")
+
+    // 修改列类型
+    t.ChangeText("description")
+
+    // 添加索引
+    t.Index("phone")
+
+    // 删除索引
+    t.DropIndex("idx_old")
+
+    // 添加外键
+    t.Foreign("department_id").References("departments", "id")
+
+    // 删除外键
+    t.DropForeign("fk_old")
+})</code></pre>
+      </div>
+
+      <h3>修改列类型</h3>
+      <p>使用 <code>Change*</code> 系列方法修改现有列的类型：</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.AlterTable(ctx, "users", func(t *schema.Table) {
+    // 将 VARCHAR 改为 TEXT
+    t.ChangeText("bio")
+
+    // 修改 VARCHAR 长度
+    t.ChangeString("email", 320)
+
+    // 将 INT 改为 BIGINT
+    t.ChangeBigInteger("view_count").Unsigned()
+
+    // 修改 DECIMAL 精度
+    t.ChangeDecimal("price", 10, 2).Default(0.00)
+})</code></pre>
+      </div>
+
+      <h4>修改列类型方法</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>说明</th>
+              <th>生成的 SQL (MySQL)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ChangeString(name, length)</code></td>
+              <td>修改为 VARCHAR</td>
+              <td>MODIFY COLUMN name VARCHAR(length)</td>
+            </tr>
+            <tr>
+              <td><code>ChangeText(name)</code></td>
+              <td>修改为 TEXT</td>
+              <td>MODIFY COLUMN name TEXT</td>
+            </tr>
+            <tr>
+              <td><code>ChangeInteger(name)</code></td>
+              <td>修改为 INT</td>
+              <td>MODIFY COLUMN name INT</td>
+            </tr>
+            <tr>
+              <td><code>ChangeBigInteger(name)</code></td>
+              <td>修改为 BIGINT</td>
+              <td>MODIFY COLUMN name BIGINT</td>
+            </tr>
+            <tr>
+              <td><code>ChangeDecimal(name, p, s)</code></td>
+              <td>修改为 DECIMAL</td>
+              <td>MODIFY COLUMN name DECIMAL(p,s)</td>
+            </tr>
+            <tr>
+              <td><code>ChangeBoolean(name)</code></td>
+              <td>修改为 BOOLEAN</td>
+              <td>MODIFY COLUMN name TINYINT(1)</td>
+            </tr>
+            <tr>
+              <td><code>ChangeDateTime(name)</code></td>
+              <td>修改为 DATETIME</td>
+              <td>MODIFY COLUMN name DATETIME</td>
+            </tr>
+            <tr>
+              <td><code>ChangeJSON(name)</code></td>
+              <td>修改为 JSON</td>
+              <td>MODIFY COLUMN name JSON</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠️ 注意</div>
+        <div class="callout-content">
+          <p><strong>SQLite 限制</strong>：SQLite 不支持 <code>MODIFY COLUMN</code>，需要重建表。</p>
+          <p><strong>数据兼容性</strong>：修改列类型时确保现有数据与新类型兼容。</p>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- MySQL Options -->
+      <h2 id="mysql-options" class="section-anchor">MySQL 专用选项</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.CreateTable(ctx, "users", func(t *schema.Table) {
+    t.ID()
+    t.String("name", 100)
+}).SetEngine("InnoDB").SetCharset("utf8mb4").SetCollation("utf8mb4_unicode_ci")</code></pre>
+      </div>
+
+      <hr>
+
+      <!-- Raw SQL -->
+      <h2 id="raw-sql" class="section-anchor">原生 SQL</h2>
+      <p>对于复杂操作，可以直接执行原生 SQL：</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">e.Raw(ctx, "CREATE INDEX CONCURRENTLY idx_users_email ON users(email)")</code></pre>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-title">💡 提示</div>
+        <div class="callout-content">
+          <p>对于大表迁移，建议使用 <code>Raw()</code> 方法执行在线 DDL：</p>
+          <pre><code class="language-go">e.Raw(ctx, "ALTER TABLE users ADD COLUMN phone VARCHAR(20), ALGORITHM=INPLACE, LOCK=NONE")</code></pre>
+        </div>
+      </div>
+    </article>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Migro &copy; 2026 | <a href="https://github.com/flyits/migro">GitHub</a> | MIT License</p>
+    </footer>
+  </main>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

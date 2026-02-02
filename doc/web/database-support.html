@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Migro 数据库支持 - MySQL、PostgreSQL、SQLite 差异说明">
+  <title>数据库支持 - Migro 文档</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <a href="index.html" class="header-logo">
+        <img src="assets/logo.svg" alt="Migro Logo" width="32" height="32">
+        <span>Migro</span>
+      </a>
+    </div>
+    <div class="header-right">
+      <a href="https://github.com/flyits/migro" class="header-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <nav class="nav">
+      <ul class="nav-list">
+        <li class="nav-item"><a href="index.html" class="nav-link">首页</a></li>
+        <li class="nav-item"><a href="getting-started.html" class="nav-link">快速入门</a></li>
+        <li class="nav-item"><a href="cli-reference.html" class="nav-link">CLI 命令参考</a></li>
+        <li class="nav-item has-submenu">
+          <a href="schema-api.html" class="nav-link">Schema API<span class="nav-arrow">▼</span></a>
+          <ul class="nav-submenu">
+            <li><a href="schema-api.html#table-builder" class="nav-link">Table 构建器</a></li>
+            <li><a href="schema-api.html#column-types" class="nav-link">列类型</a></li>
+            <li><a href="schema-api.html#column-modifiers" class="nav-link">列修饰符</a></li>
+            <li><a href="schema-api.html#indexes" class="nav-link">索引</a></li>
+            <li><a href="schema-api.html#foreign-keys" class="nav-link">外键</a></li>
+            <li><a href="schema-api.html#alter-table" class="nav-link">ALTER TABLE</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a href="configuration.html" class="nav-link">配置指南</a></li>
+        <li class="nav-item"><a href="database-support.html" class="nav-link active">数据库支持</a></li>
+        <li class="nav-item"><a href="best-practices.html" class="nav-link">最佳实践</a></li>
+        <li class="nav-item"><a href="examples.html" class="nav-link">示例代码</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="overlay"></div>
+
+  <main class="content">
+    <article class="article">
+      <h1>数据库支持</h1>
+      <p>Migro 支持 MySQL、PostgreSQL 和 SQLite，并自动处理不同数据库之间的差异。</p>
+
+      <h2 id="transaction-ddl" class="section-anchor">事务 DDL</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>数据库</th><th>支持事务 DDL</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MySQL</td><td>❌ 否</td><td>DDL 会隐式提交事务</td></tr>
+            <tr><td>PostgreSQL</td><td>✅ 是</td><td>完整事务支持</td></tr>
+            <tr><td>SQLite</td><td>✅ 是</td><td>完整事务支持</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Migro 会自动检测数据库类型，对支持事务 DDL 的数据库使用事务包裹迁移。</p>
+
+      <h2 id="type-mapping" class="section-anchor">类型映射</h2>
+      <p>不同数据库的类型映射有所不同，Migro 会自动处理：</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Migro 类型</th><th>MySQL</th><th>PostgreSQL</th><th>SQLite</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Boolean</td><td>TINYINT(1)</td><td>BOOLEAN</td><td>INTEGER</td></tr>
+            <tr><td>JSON</td><td>JSON</td><td>JSONB</td><td>TEXT</td></tr>
+            <tr><td>自增主键</td><td>AUTO_INCREMENT</td><td>SERIAL/BIGSERIAL</td><td>AUTOINCREMENT</td></tr>
+            <tr><td>UUID</td><td>CHAR(36)</td><td>UUID</td><td>TEXT</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="alter-table-limits" class="section-anchor">ALTER TABLE 限制</h2>
+      <p>SQLite 对 ALTER TABLE 支持有限：</p>
+      <ul>
+        <li><strong>支持</strong>：ADD COLUMN、RENAME COLUMN</li>
+        <li><strong>不支持</strong>：DROP COLUMN、MODIFY COLUMN（需要重建表）</li>
+      </ul>
+
+      <div class="callout warning">
+        <div class="callout-title">⚠️ SQLite 注意事项</div>
+        <div class="callout-content">
+          <p>对于复杂的 SQLite 表修改，建议使用 <code>Raw()</code> 方法手动处理表重建。</p>
+        </div>
+      </div>
+
+      <h2 id="mysql-features" class="section-anchor">MySQL 专用特性</h2>
+      <ul>
+        <li>支持 <code>UNSIGNED</code> 整数类型</li>
+        <li>支持 <code>ENGINE</code>、<code>CHARSET</code>、<code>COLLATION</code> 设置</li>
+        <li>支持 <code>FULLTEXT</code> 全文索引</li>
+        <li>支持 <code>AFTER</code> 列位置指定</li>
+      </ul>
+
+      <h2 id="postgres-features" class="section-anchor">PostgreSQL 专用特性</h2>
+      <ul>
+        <li>原生 <code>UUID</code> 类型支持</li>
+        <li>原生 <code>JSONB</code> 类型（比 JSON 更高效）</li>
+        <li>支持 <code>SERIAL</code>/<code>BIGSERIAL</code> 自增类型</li>
+        <li>支持 <code>CONCURRENTLY</code> 创建索引</li>
+      </ul>
+    </article>
+
+    <footer class="footer">
+      <p>Migro &copy; 2026 | <a href="https://github.com/flyits/migro">GitHub</a> | MIT License</p>
+    </footer>
+  </main>
+
+  <button class="back-to-top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
