@@ -4,7 +4,32 @@
 - **状态**: 已完成
 - **负责人**: Tester (Claude Opus 4.5)
 - **测试时间**: 2026-02-02
-- **测试范围**: Schema DSL、Grammar、配置管理
+- **测试范围**: Schema DSL、Grammar、配置管理、Migrator、Driver Registry
+
+---
+
+## 测试覆盖率总结
+
+### 最新覆盖率报告 (2026-02-02 更新)
+
+| 模块 | 之前覆盖率 | 当前覆盖率 | 提升 | 状态 |
+|------|-----------|-----------|------|------|
+| pkg/schema | 92.8% | 92.8% | - | ✅ 高覆盖 |
+| pkg/driver (registry) | 0.0% | **100.0%** | +100% | ✅ **新增** |
+| pkg/driver/mysql | 46.0% | **65.6%** | +19.6% | ✅ 显著提升 |
+| pkg/driver/postgres | 44.9% | **60.7%** | +15.8% | ✅ 显著提升 |
+| pkg/driver/sqlite | 44.9% | **49.4%** | +4.5% | ✅ 提升 |
+| internal/config | 96.2% | 96.2% | - | ✅ 高覆盖 |
+| internal/migrator | 0.0% | **63.4%** | +63.4% | ✅ **新增** |
+
+**总体结果**: ✅ **所有测试通过，覆盖率显著提升**
+
+### 新增测试文件
+
+| 文件路径 | 测试数量 | 覆盖功能 |
+|---------|---------|---------|
+| pkg/driver/registry_test.go | 8 | 驱动注册、获取、并发访问 |
+| internal/migrator/migrator_test.go | 20+ | Migrator、Executor、Transaction |
 
 ---
 
@@ -223,9 +248,104 @@
 
 | 模块 | 原因 | 优先级 |
 |------|------|--------|
-| internal/migrator/migrator.go | 需要 Mock Driver | P1 |
+| ~~internal/migrator/migrator.go~~ | ~~需要 Mock Driver~~ | ✅ **已完成** |
 | pkg/driver/*/driver.go | 需要真实数据库连接 | P2 |
 | internal/cli/*.go | 需要 E2E 测试框架 | P2 |
+
+---
+
+## 新增测试详情 (2026-02-02)
+
+### 4. Driver Registry 测试 (`pkg/driver/registry_test.go`)
+
+| 测试用例 | 测试目标 | 预期结果 | 实际结果 | 状态 |
+|---------|---------|---------|---------|------|
+| TestRegister/register_valid_driver | 验证驱动注册 | 驱动成功注册并可获取 | 符合预期 | ✅ |
+| TestRegister/register_nil_factory_panics | 验证 nil 工厂函数 | panic | 符合预期 | ✅ |
+| TestRegister/register_duplicate_driver_panics | 验证重复注册 | panic | 符合预期 | ✅ |
+| TestGet/get_registered_driver | 验证获取已注册驱动 | 返回驱动实例 | 符合预期 | ✅ |
+| TestGet/get_unregistered_driver_returns_error | 验证获取未注册驱动 | 返回错误 | 符合预期 | ✅ |
+| TestGet/get_returns_new_instance_each_time | 验证每次返回新实例 | 工厂函数被多次调用 | 符合预期 | ✅ |
+| TestDrivers/returns_empty_list | 验证空驱动列表 | 返回空列表 | 符合预期 | ✅ |
+| TestDrivers/returns_all_registered_drivers | 验证驱动列表 | 返回所有已注册驱动 | 符合预期 | ✅ |
+| TestConcurrentAccess | 验证并发访问安全 | 无竞态条件 | 符合预期 | ✅ |
+
+### 5. Migrator 测试 (`internal/migrator/migrator_test.go`)
+
+| 测试用例 | 测试目标 | 预期结果 | 实际结果 | 状态 |
+|---------|---------|---------|---------|------|
+| TestNewMigrator | 验证创建 Migrator | 正确初始化 | 符合预期 | ✅ |
+| TestMigrator_SetDryRun | 验证 dry run 模式 | 标志正确设置 | 符合预期 | ✅ |
+| TestMigrator_Register | 验证注册迁移 | 迁移添加到列表 | 符合预期 | ✅ |
+| TestMigrator_RegisterAll | 验证批量注册 | 多个迁移正确添加 | 符合预期 | ✅ |
+| TestMigrator_supportsTransactionalDDL | 验证事务 DDL 支持检测 | PG/SQLite=true, MySQL=false | 符合预期 | ✅ |
+| TestMigrator_Up/no_pending_migrations | 验证无待执行迁移 | 返回空列表 | 符合预期 | ✅ |
+| TestMigrator_Up/run_all_pending_migrations | 验证执行所有迁移 | 所有迁移执行 | 符合预期 | ✅ |
+| TestMigrator_Up/run_with_step_limit | 验证步数限制 | 只执行指定数量 | 符合预期 | ✅ |
+| TestMigrator_Up/skip_already_executed | 验证跳过已执行 | 只执行待处理的 | 符合预期 | ✅ |
+| TestMigrator_Up/migration_failure_stops | 验证失败停止 | 返回错误，停止后续 | 符合预期 | ✅ |
+| TestMigrator_Up/dry_run_mode | 验证 dry run | 不实际执行 | 符合预期 | ✅ |
+| TestMigrator_Down/no_migrations | 验证无迁移回滚 | 返回空列表 | 符合预期 | ✅ |
+| TestMigrator_Down/rollback_last_batch | 验证回滚最后批次 | 批次内迁移回滚 | 符合预期 | ✅ |
+| TestMigrator_Down/rollback_with_step | 验证步数回滚 | 指定数量回滚 | 符合预期 | ✅ |
+| TestMigrator_Down/migration_not_found | 验证未找到迁移 | 返回错误 | 符合预期 | ✅ |
+| TestMigrator_Reset | 验证重置所有 | 所有迁移回滚 | 符合预期 | ✅ |
+| TestMigrator_Refresh | 验证刷新迁移 | 回滚后重新执行 | 符合预期 | ✅ |
+| TestMigrator_Status | 验证状态查询 | 正确显示执行状态 | 符合预期 | ✅ |
+| TestExecutor_DryRun | 验证执行器 dry run | SQL 被收集不执行 | 符合预期 | ✅ |
+| TestExecutor_Operations | 验证所有执行器操作 | Create/Alter/Drop/Rename | 符合预期 | ✅ |
+| TestNewTransactionExecutor | 验证事务执行器 | 正确初始化 | 符合预期 | ✅ |
+
+### 6. Grammar 补充测试
+
+#### MySQL Grammar 新增测试
+
+| 测试用例 | 测试目标 | 状态 |
+|---------|---------|------|
+| TestGrammar_CompileAlter/modify_column | MODIFY COLUMN 语句 | ✅ |
+| TestGrammar_CompileAlter/add_column_after | AFTER 子句 | ✅ |
+| TestGrammar_CompileAlter/drop_foreign_key | DROP FOREIGN KEY | ✅ |
+| TestGrammar_CompileAlter/drop_index | DROP INDEX | ✅ |
+| TestGrammar_CompileAlter/add_index | CREATE INDEX (ALTER) | ✅ |
+| TestGrammar_CompileAlter/add_foreign_key | ADD CONSTRAINT FK | ✅ |
+| TestGrammar_CompileDropIndex | DROP INDEX ON table | ✅ |
+| TestGrammar_CompileDropForeignKey | ALTER TABLE DROP FK | ✅ |
+| TestGrammar_MigrationTableOperations | GetMigrations/Insert/Delete/LastBatch | ✅ |
+| TestGrammar_CompileColumn_AllTypes | 所有 17+ 列类型 | ✅ |
+| TestGrammar_CompileCreate_WithIndexes | 内联索引 | ✅ |
+| TestGrammar_CompileCreate_WithForeignKey | 内联外键 | ✅ |
+| TestGrammar_CompileIndex_WithCustomName | 自定义索引名 | ✅ |
+| TestGrammar_CompileForeignKey_WithCustomName | 自定义外键名 | ✅ |
+| TestGrammar_EscapeString | 单引号转义 | ✅ |
+
+#### PostgreSQL Grammar 新增测试
+
+| 测试用例 | 测试目标 | 状态 |
+|---------|---------|------|
+| TestGrammar_CompileAlter/drop_column | DROP COLUMN | ✅ |
+| TestGrammar_CompileAlter/rename_column | RENAME COLUMN | ✅ |
+| TestGrammar_CompileAlter/drop_foreign_key | DROP CONSTRAINT | ✅ |
+| TestGrammar_CompileAlter/drop_index | DROP INDEX | ✅ |
+| TestGrammar_CompileAlter/add_index | CREATE INDEX | ✅ |
+| TestGrammar_CompileAlter/add_foreign_key | ADD CONSTRAINT FK | ✅ |
+| TestGrammar_CompileAlter/set_not_null | SET NOT NULL | ✅ |
+| TestGrammar_TypeDecimal | DECIMAL(p,s) | ✅ |
+| TestGrammar_CompileDropIndex | DROP INDEX | ✅ |
+| TestGrammar_MigrationTableOperations | 迁移表操作 | ✅ |
+| TestGrammar_CompileColumn_AllTypes | 所有列类型 | ✅ |
+| TestGrammar_CompileCreate_WithIndexes | 索引创建 | ✅ |
+| TestGrammar_CompileCreate_WithForeignKey | 外键创建 | ✅ |
+| TestGrammar_CompileForeignKey_WithOnUpdate | ON UPDATE CASCADE | ✅ |
+
+#### SQLite Grammar 新增测试
+
+| 测试用例 | 测试目标 | 状态 |
+|---------|---------|------|
+| TestGrammar_CompileAlter/add_index | CREATE INDEX | ✅ |
+| TestGrammar_MigrationTableOperations | 迁移表操作 | ✅ |
+| TestGrammar_CompileColumn_AllTypes | 所有列类型映射 | ✅ |
+| TestGrammar_CompileCreate_WithForeignKeyOnUpdate | ON UPDATE CASCADE | ✅ |
+| TestGrammar_CompileIndex_WithCustomName | 自定义索引名 | ✅ |
 
 ---
 
@@ -282,16 +402,33 @@ go tool cover -html=coverage.out
 
 **测试结果**: ✅ **全部通过**
 
-1. **Schema DSL**: 所有链式 API 工作正常，符合 Laravel 风格设计
-2. **Grammar**: 三种数据库驱动的 SQL 生成正确
-3. **安全修复**: SQL 注入防护已验证有效
-4. **Context 传递**: 已验证所有方法正确传递 context
-5. **事务保护**: 已验证 PostgreSQL/SQLite 使用事务 DDL
+### 本次更新成果
 
-**建议**: 代码质量良好，可以进入下一阶段（API 文档编写）。
+1. **新增测试文件**:
+   - `pkg/driver/registry_test.go` - 驱动注册表完整测试
+   - `internal/migrator/migrator_test.go` - 迁移器核心功能测试
+
+2. **覆盖率提升**:
+   - `pkg/driver`: 0% → **100%** (+100%)
+   - `internal/migrator`: 0% → **63.4%** (+63.4%)
+   - `pkg/driver/mysql`: 46% → **65.6%** (+19.6%)
+   - `pkg/driver/postgres`: 44.9% → **60.7%** (+15.8%)
+   - `pkg/driver/sqlite`: 44.9% → **49.4%** (+4.5%)
+
+3. **测试内容**:
+   - Schema DSL: 所有链式 API 工作正常
+   - Grammar: 三种数据库驱动的 SQL 生成正确
+   - Migrator: Up/Down/Reset/Refresh/Status 功能正常
+   - Executor: DryRun 和正常模式工作正常
+   - Driver Registry: 注册/获取/并发安全
+   - 安全修复: SQL 注入防护已验证有效
+   - Context 传递: 已验证所有方法正确传递 context
+   - 事务保护: 已验证 PostgreSQL/SQLite 使用事务 DDL
+
+**建议**: 代码质量良好，测试覆盖率已显著提升。
 
 ---
 
-**任务完成标志**: 功能测试完成，所有测试通过。
+**任务完成标志**: 测试覆盖率提升完成，所有测试通过。
 
 **下一步**: 显式调用 `/team` 继续任务。

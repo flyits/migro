@@ -347,6 +347,207 @@ func TestGrammar_CompileAlter(t *testing.T) {
 		}
 	})
 
-	// 注意: SQLite 不支持 DROP COLUMN 和 MODIFY COLUMN
-	// 这些操作需要重建表
+	t.Run("add index", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.IsAlter = true
+		table.Index("email")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "CREATE INDEX") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected CREATE INDEX statement")
+		}
+	})
+
+	// 注意: SQLite 不支持 DROP COLUMN, DROP INDEX, MODIFY COLUMN
+	// 这些操作需要重建表，在 CompileAlter 中不实现
+}
+
+func TestGrammar_MigrationTableOperations(t *testing.T) {
+	g := NewGrammar()
+
+	t.Run("CompileGetMigrations", func(t *testing.T) {
+		sql := g.CompileGetMigrations("migrations")
+		if !strings.Contains(sql, "SELECT") {
+			t.Error("expected SELECT statement")
+		}
+	})
+
+	t.Run("CompileInsertMigration", func(t *testing.T) {
+		sql := g.CompileInsertMigration("migrations")
+		if !strings.Contains(sql, "INSERT INTO") {
+			t.Error("expected INSERT INTO statement")
+		}
+	})
+
+	t.Run("CompileDeleteMigration", func(t *testing.T) {
+		sql := g.CompileDeleteMigration("migrations")
+		if !strings.Contains(sql, "DELETE FROM") {
+			t.Error("expected DELETE FROM statement")
+		}
+	})
+
+	t.Run("CompileGetLastBatch", func(t *testing.T) {
+		sql := g.CompileGetLastBatch("migrations")
+		if !strings.Contains(sql, "MAX(batch)") {
+			t.Error("expected MAX(batch) in query")
+		}
+	})
+}
+
+func TestGrammar_CompileColumn_AllTypes(t *testing.T) {
+	g := NewGrammar()
+
+	tests := []struct {
+		name     string
+		col      *schema.Column
+		contains []string
+	}{
+		{
+			name:     "text column",
+			col:      &schema.Column{Name: "content", Type: schema.TypeText},
+			contains: []string{"\"content\"", "TEXT"},
+		},
+		{
+			name:     "bigint maps to INTEGER",
+			col:      &schema.Column{Name: "big_id", Type: schema.TypeBigInteger},
+			contains: []string{"\"big_id\"", "INTEGER"},
+		},
+		{
+			name:     "smallint maps to INTEGER",
+			col:      &schema.Column{Name: "small_num", Type: schema.TypeSmallInteger},
+			contains: []string{"\"small_num\"", "INTEGER"},
+		},
+		{
+			name:     "tinyint maps to INTEGER",
+			col:      &schema.Column{Name: "tiny_num", Type: schema.TypeTinyInteger},
+			contains: []string{"\"tiny_num\"", "INTEGER"},
+		},
+		{
+			name:     "float maps to REAL",
+			col:      &schema.Column{Name: "price", Type: schema.TypeFloat},
+			contains: []string{"\"price\"", "REAL"},
+		},
+		{
+			name:     "double maps to REAL",
+			col:      &schema.Column{Name: "amount", Type: schema.TypeDouble},
+			contains: []string{"\"amount\"", "REAL"},
+		},
+		{
+			name:     "decimal maps to REAL",
+			col:      &schema.Column{Name: "total", Type: schema.TypeDecimal, Precision: 10, Scale: 2},
+			contains: []string{"\"total\"", "REAL"},
+		},
+		{
+			name:     "boolean maps to INTEGER",
+			col:      &schema.Column{Name: "active", Type: schema.TypeBoolean},
+			contains: []string{"\"active\"", "INTEGER"},
+		},
+		{
+			name:     "date maps to TEXT",
+			col:      &schema.Column{Name: "birth_date", Type: schema.TypeDate},
+			contains: []string{"\"birth_date\"", "TEXT"},
+		},
+		{
+			name:     "datetime maps to TEXT",
+			col:      &schema.Column{Name: "created_at", Type: schema.TypeDateTime},
+			contains: []string{"\"created_at\"", "TEXT"},
+		},
+		{
+			name:     "timestamp maps to TEXT",
+			col:      &schema.Column{Name: "updated_at", Type: schema.TypeTimestamp},
+			contains: []string{"\"updated_at\"", "TEXT"},
+		},
+		{
+			name:     "time maps to TEXT",
+			col:      &schema.Column{Name: "start_time", Type: schema.TypeTime},
+			contains: []string{"\"start_time\"", "TEXT"},
+		},
+		{
+			name:     "json maps to TEXT",
+			col:      &schema.Column{Name: "metadata", Type: schema.TypeJSON},
+			contains: []string{"\"metadata\"", "TEXT"},
+		},
+		{
+			name:     "binary maps to BLOB",
+			col:      &schema.Column{Name: "data", Type: schema.TypeBinary},
+			contains: []string{"\"data\"", "BLOB"},
+		},
+		{
+			name:     "uuid maps to TEXT",
+			col:      &schema.Column{Name: "uuid", Type: schema.TypeUUID},
+			contains: []string{"\"uuid\"", "TEXT"},
+		},
+		{
+			name:     "string maps to TEXT",
+			col:      &schema.Column{Name: "name", Type: schema.TypeString, Length: 100},
+			contains: []string{"\"name\"", "TEXT"},
+		},
+		{
+			name:     "not null column",
+			col:      &schema.Column{Name: "email", Type: schema.TypeString, Length: 100, IsNullable: false},
+			contains: []string{"NOT NULL"},
+		},
+		{
+			name:     "column with default string",
+			col:      &schema.Column{Name: "status", Type: schema.TypeString, Length: 20, DefaultValue: "active"},
+			contains: []string{"DEFAULT 'active'"},
+		},
+		{
+			name:     "column with default number",
+			col:      &schema.Column{Name: "count", Type: schema.TypeInteger, DefaultValue: 0},
+			contains: []string{"DEFAULT 0"},
+		},
+		{
+			name:     "unknown type defaults to TEXT",
+			col:      &schema.Column{Name: "unknown", Type: schema.ColumnType(999)},
+			contains: []string{"TEXT"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql := g.CompileColumn(tt.col)
+			for _, expected := range tt.contains {
+				if !strings.Contains(sql, expected) {
+					t.Errorf("expected SQL to contain '%s', got: %s", expected, sql)
+				}
+			}
+		})
+	}
+}
+
+func TestGrammar_CompileCreate_WithForeignKeyOnUpdate(t *testing.T) {
+	g := NewGrammar()
+
+	table := schema.NewTable("posts")
+	table.ID()
+	table.BigInteger("user_id")
+	table.Foreign("user_id").References("users", "id").OnUpdateCascade()
+
+	sql := g.CompileCreate(table)
+
+	if !strings.Contains(sql, "ON UPDATE CASCADE") {
+		t.Error("expected ON UPDATE CASCADE in CREATE TABLE")
+	}
+}
+
+func TestGrammar_CompileIndex_WithCustomName(t *testing.T) {
+	g := NewGrammar()
+
+	idx := schema.NewIndex("email")
+	idx.Name = "custom_email_index"
+
+	sql := g.CompileIndex("users", idx)
+
+	if !strings.Contains(sql, "\"custom_email_index\"") {
+		t.Error("expected custom index name")
+	}
 }

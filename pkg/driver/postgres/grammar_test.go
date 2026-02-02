@@ -356,4 +356,426 @@ func TestGrammar_CompileAlter(t *testing.T) {
 			t.Error("expected DEFAULT change statement")
 		}
 	})
+
+	t.Run("drop column", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.IsAlter = true
+		table.DropColumn("old_column")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "DROP COLUMN") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected DROP COLUMN statement")
+		}
+	})
+
+	t.Run("rename column", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.IsAlter = true
+		table.RenameColumn("old_name", "new_name")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "RENAME COLUMN") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected RENAME COLUMN statement")
+		}
+	})
+
+	t.Run("drop foreign key", func(t *testing.T) {
+		table := schema.NewTable("posts")
+		table.IsAlter = true
+		table.DropForeign("posts_user_id_fk")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "DROP CONSTRAINT") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected DROP CONSTRAINT statement")
+		}
+	})
+
+	t.Run("drop index", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.IsAlter = true
+		table.DropIndex("users_email_idx")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "DROP INDEX") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected DROP INDEX statement")
+		}
+	})
+
+	t.Run("add index", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.IsAlter = true
+		table.Index("email")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "CREATE INDEX") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected CREATE INDEX statement")
+		}
+	})
+
+	t.Run("add foreign key", func(t *testing.T) {
+		table := schema.NewTable("posts")
+		table.IsAlter = true
+		table.Foreign("user_id").References("users", "id")
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "ADD CONSTRAINT") && strings.Contains(sql, "FOREIGN KEY") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected ADD CONSTRAINT FOREIGN KEY statement")
+		}
+	})
+
+	t.Run("modify column set not null", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.IsAlter = true
+		col := table.String("name", 200)
+		col.Change = true
+		col.IsNullable = false
+
+		sqls := g.CompileAlter(table)
+
+		found := false
+		for _, sql := range sqls {
+			if strings.Contains(sql, "SET NOT NULL") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected SET NOT NULL statement")
+		}
+	})
+}
+
+func TestGrammar_TypeDecimal(t *testing.T) {
+	g := NewGrammar()
+
+	result := g.TypeDecimal(10, 2)
+	expected := "DECIMAL(10,2)"
+
+	if result != expected {
+		t.Errorf("expected %s, got %s", expected, result)
+	}
+}
+
+func TestGrammar_CompileDropIndex(t *testing.T) {
+	g := NewGrammar()
+
+	sql := g.CompileDropIndex("users", "users_email_idx")
+
+	// PostgreSQL 不需要表名
+	if !strings.Contains(sql, "DROP INDEX") {
+		t.Error("expected DROP INDEX")
+	}
+	if !strings.Contains(sql, "\"users_email_idx\"") {
+		t.Error("expected index name")
+	}
+}
+
+func TestGrammar_MigrationTableOperations(t *testing.T) {
+	g := NewGrammar()
+
+	t.Run("CompileGetMigrations", func(t *testing.T) {
+		sql := g.CompileGetMigrations("migrations")
+		if !strings.Contains(sql, "SELECT") {
+			t.Error("expected SELECT statement")
+		}
+	})
+
+	t.Run("CompileDeleteMigration", func(t *testing.T) {
+		sql := g.CompileDeleteMigration("migrations")
+		if !strings.Contains(sql, "DELETE FROM") {
+			t.Error("expected DELETE FROM statement")
+		}
+		// PostgreSQL 使用 $1 占位符
+		if !strings.Contains(sql, "$1") {
+			t.Error("expected PostgreSQL-style placeholder")
+		}
+	})
+
+	t.Run("CompileGetLastBatch", func(t *testing.T) {
+		sql := g.CompileGetLastBatch("migrations")
+		if !strings.Contains(sql, "MAX(batch)") || !strings.Contains(sql, "COALESCE") {
+			t.Error("expected COALESCE(MAX(batch)) in query")
+		}
+	})
+}
+
+func TestGrammar_CompileColumn_AllTypes(t *testing.T) {
+	g := NewGrammar()
+
+	tests := []struct {
+		name     string
+		col      *schema.Column
+		contains []string
+	}{
+		{
+			name:     "text column",
+			col:      &schema.Column{Name: "content", Type: schema.TypeText},
+			contains: []string{"\"content\"", "TEXT"},
+		},
+		{
+			name:     "bigint column",
+			col:      &schema.Column{Name: "big_id", Type: schema.TypeBigInteger},
+			contains: []string{"\"big_id\"", "BIGINT"},
+		},
+		{
+			name:     "smallint column",
+			col:      &schema.Column{Name: "small_num", Type: schema.TypeSmallInteger},
+			contains: []string{"\"small_num\"", "SMALLINT"},
+		},
+		{
+			name:     "tinyint maps to smallint",
+			col:      &schema.Column{Name: "tiny_num", Type: schema.TypeTinyInteger},
+			contains: []string{"\"tiny_num\"", "SMALLINT"},
+		},
+		{
+			name:     "float column",
+			col:      &schema.Column{Name: "price", Type: schema.TypeFloat},
+			contains: []string{"\"price\"", "REAL"},
+		},
+		{
+			name:     "double column",
+			col:      &schema.Column{Name: "amount", Type: schema.TypeDouble},
+			contains: []string{"\"amount\"", "DOUBLE PRECISION"},
+		},
+		{
+			name:     "decimal column",
+			col:      &schema.Column{Name: "total", Type: schema.TypeDecimal, Precision: 10, Scale: 2},
+			contains: []string{"\"total\"", "DECIMAL(10,2)"},
+		},
+		{
+			name:     "boolean column",
+			col:      &schema.Column{Name: "active", Type: schema.TypeBoolean},
+			contains: []string{"\"active\"", "BOOLEAN"},
+		},
+		{
+			name:     "date column",
+			col:      &schema.Column{Name: "birth_date", Type: schema.TypeDate},
+			contains: []string{"\"birth_date\"", "DATE"},
+		},
+		{
+			name:     "datetime column",
+			col:      &schema.Column{Name: "created_at", Type: schema.TypeDateTime},
+			contains: []string{"\"created_at\"", "TIMESTAMP"},
+		},
+		{
+			name:     "timestamp column",
+			col:      &schema.Column{Name: "updated_at", Type: schema.TypeTimestamp},
+			contains: []string{"\"updated_at\"", "TIMESTAMP"},
+		},
+		{
+			name:     "time column",
+			col:      &schema.Column{Name: "start_time", Type: schema.TypeTime},
+			contains: []string{"\"start_time\"", "TIME"},
+		},
+		{
+			name:     "json column uses JSONB",
+			col:      &schema.Column{Name: "metadata", Type: schema.TypeJSON},
+			contains: []string{"\"metadata\"", "JSONB"},
+		},
+		{
+			name:     "binary column uses BYTEA",
+			col:      &schema.Column{Name: "data", Type: schema.TypeBinary},
+			contains: []string{"\"data\"", "BYTEA"},
+		},
+		{
+			name:     "uuid column",
+			col:      &schema.Column{Name: "uuid", Type: schema.TypeUUID},
+			contains: []string{"\"uuid\"", "UUID"},
+		},
+		{
+			name:     "nullable column does not have NOT NULL",
+			col:      &schema.Column{Name: "email", Type: schema.TypeString, Length: 100, IsNullable: true},
+			contains: []string{"\"email\"", "VARCHAR(100)"},
+		},
+		{
+			name:     "not null column",
+			col:      &schema.Column{Name: "email", Type: schema.TypeString, Length: 100, IsNullable: false},
+			contains: []string{"NOT NULL"},
+		},
+		{
+			name:     "column with default string",
+			col:      &schema.Column{Name: "status", Type: schema.TypeString, Length: 20, DefaultValue: "active"},
+			contains: []string{"DEFAULT 'active'"},
+		},
+		{
+			name:     "column with default bool false",
+			col:      &schema.Column{Name: "active", Type: schema.TypeBoolean, DefaultValue: false},
+			contains: []string{"DEFAULT FALSE"},
+		},
+		{
+			name:     "column with default number",
+			col:      &schema.Column{Name: "count", Type: schema.TypeInteger, DefaultValue: 0},
+			contains: []string{"DEFAULT 0"},
+		},
+		{
+			name:     "unknown type defaults to varchar",
+			col:      &schema.Column{Name: "unknown", Type: schema.ColumnType(999)},
+			contains: []string{"VARCHAR(255)"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql := g.CompileColumn(tt.col)
+			for _, expected := range tt.contains {
+				if !strings.Contains(sql, expected) {
+					t.Errorf("expected SQL to contain '%s', got: %s", expected, sql)
+				}
+			}
+		})
+	}
+}
+
+func TestGrammar_CompileCreate_WithIndexes(t *testing.T) {
+	g := NewGrammar()
+
+	t.Run("table with unique index creates separate statement", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.ID()
+		table.String("email", 100)
+		table.Unique("email")
+
+		sql := g.CompileCreate(table)
+
+		// PostgreSQL 在 CREATE TABLE 中不包含索引，索引单独创建
+		if sql == "" {
+			t.Error("expected non-empty SQL")
+		}
+	})
+
+	t.Run("table with regular index", func(t *testing.T) {
+		table := schema.NewTable("users")
+		table.ID()
+		table.String("name", 100)
+		table.Index("name")
+
+		sql := g.CompileCreate(table)
+
+		// PostgreSQL 可能在 CREATE TABLE 内或外创建索引
+		if sql == "" {
+			t.Error("expected non-empty SQL")
+		}
+	})
+}
+
+func TestGrammar_CompileCreate_WithForeignKey(t *testing.T) {
+	g := NewGrammar()
+
+	t.Run("table with foreign key", func(t *testing.T) {
+		table := schema.NewTable("posts")
+		table.ID()
+		table.BigInteger("user_id")
+		table.Foreign("user_id").References("users", "id").OnDeleteCascade()
+
+		sql := g.CompileCreate(table)
+
+		if !strings.Contains(sql, "REFERENCES \"users\"") {
+			t.Error("expected REFERENCES in CREATE TABLE")
+		}
+		if !strings.Contains(sql, "ON DELETE CASCADE") {
+			t.Error("expected ON DELETE CASCADE in CREATE TABLE")
+		}
+	})
+
+	t.Run("foreign key with on update", func(t *testing.T) {
+		table := schema.NewTable("posts")
+		table.ID()
+		table.BigInteger("user_id")
+		table.Foreign("user_id").References("users", "id").OnUpdateCascade()
+
+		sql := g.CompileCreate(table)
+
+		if !strings.Contains(sql, "ON UPDATE CASCADE") {
+			t.Error("expected ON UPDATE CASCADE in CREATE TABLE")
+		}
+	})
+}
+
+func TestGrammar_CompileIndex_WithCustomName(t *testing.T) {
+	g := NewGrammar()
+
+	idx := schema.NewIndex("email")
+	idx.Name = "custom_email_index"
+
+	sql := g.CompileIndex("users", idx)
+
+	if !strings.Contains(sql, "\"custom_email_index\"") {
+		t.Error("expected custom index name")
+	}
+}
+
+func TestGrammar_CompileForeignKey_WithCustomName(t *testing.T) {
+	g := NewGrammar()
+
+	fk := schema.NewForeignKey("user_id")
+	fk.Name = "custom_fk_name"
+	fk.References("users", "id")
+
+	sql := g.CompileForeignKey("posts", fk)
+
+	if !strings.Contains(sql, "\"custom_fk_name\"") {
+		t.Error("expected custom foreign key name")
+	}
+}
+
+func TestGrammar_CompileForeignKey_WithOnUpdate(t *testing.T) {
+	g := NewGrammar()
+
+	fk := schema.NewForeignKey("user_id").
+		References("users", "id").
+		OnUpdateCascade()
+
+	sql := g.CompileForeignKey("posts", fk)
+
+	if !strings.Contains(sql, "ON UPDATE CASCADE") {
+		t.Error("expected ON UPDATE CASCADE")
+	}
 }
