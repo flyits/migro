@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flyits/migro/pkg/driver"
+	"github.com/flyits/migro/pkg/schema"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/migro/migro/pkg/driver"
-	"github.com/migro/migro/pkg/schema"
 )
 
 func init() {

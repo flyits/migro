@@ -245,3 +245,266 @@ Grammar 接口包含 30+ 个方法，违反了接口隔离原则。
 **任务完成标志**: 代码审查完成，等待 Engineer 修复问题。
 
 **下一步**: 显式调用 `/team` 继续任务。
+
+---
+
+# T11: API 文档网页代码审查报告
+
+## 审查状态
+- **状态**: ✅ 已完成
+- **负责人**: Code Reviewer
+- **审查时间**: 2026-02-02
+- **审查范围**: `/doc/web` 目录下的前端代码（HTML/CSS/JS）
+
+---
+
+## 审查总结
+
+整体代码质量**优秀**，前端实现符合架构设计要求，代码组织清晰，响应式布局完善。以下是详细的审查结果。
+
+---
+
+## 【必须修改】
+
+**无**
+
+本次审查未发现必须修改的严重问题。代码质量良好，可以合并。
+
+---
+
+## 【潜在风险】
+
+### 1. 代码复制功能 - XSS 风险评估
+
+**文件**: `doc/web/js/main.js:151-162`
+
+```javascript
+function copyToClipboard(text, button) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showCopiedFeedback(button);
+    }).catch(function() {
+      fallbackCopy(text, button);
+    });
+  } else {
+    fallbackCopy(text, button);
+  }
+}
+```
+
+**分析**:
+- 代码复制功能使用 `textContent` 获取代码内容，这是安全的做法
+- 没有使用 `innerHTML` 或 `eval`，不存在 XSS 风险
+- 降级方案使用 `textarea.value` 赋值，同样安全
+
+**状态**: ✅ 安全，无需修改
+
+---
+
+### 2. 外部 CDN 依赖
+
+**文件**: 所有 HTML 文件
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+```
+
+**风险**:
+- 依赖外部 CDN，如果 CDN 不可用，代码高亮功能将失效
+- 使用 HTTPS 和固定版本号，降低了供应链攻击风险
+
+**建议**:
+- 可选：添加本地 fallback 文件
+- 可选：添加 SRI (Subresource Integrity) 校验
+
+**状态**: ⚠️ 低风险，建议后续优化
+
+---
+
+### 3. 移动端侧边栏状态管理
+
+**文件**: `doc/web/js/main.js:27-36`
+
+```javascript
+if (menuToggle) {
+  menuToggle.addEventListener('click', function() {
+    document.body.classList.toggle('sidebar-open');
+  });
+}
+```
+
+**分析**:
+- 使用 CSS class 切换状态，实现简洁
+- 支持 Escape 键关闭侧边栏，用户体验好
+- 点击遮罩层关闭侧边栏，符合预期
+
+**状态**: ✅ 实现正确，无需修改
+
+---
+
+## 【优化建议】
+
+### 1. HTML 可访问性增强
+
+**文件**: 所有 HTML 文件
+
+**当前状态**:
+- ✅ 使用语义化 HTML5 标签（`<header>`, `<nav>`, `<main>`, `<article>`, `<footer>`）
+- ✅ 按钮有 `aria-label` 属性
+- ✅ 图片有 `alt` 属性
+- ✅ 外部链接有 `rel="noopener"`
+
+**建议优化**:
+1. 为 `<aside class="sidebar">` 添加 `role="navigation"` 或 `aria-label="主导航"`
+2. 为 TOC 添加 `role="navigation"` 和 `aria-label="页面目录"`
+
+**优先级**: P2 (可选优化)
+
+---
+
+### 2. CSS 变量命名一致性
+
+**文件**: `doc/web/css/variables.css`
+
+**当前状态**: 变量命名清晰，使用 BEM 风格的命名约定
+
+**亮点**:
+- 颜色系统完整（primary, text, bg, border, success, warning, danger）
+- 间距系统使用 t-shirt 尺寸（xs, sm, md, lg, xl, 2xl）
+- 响应式断点变量化
+
+**状态**: ✅ 优秀，无需修改
+
+---
+
+### 3. CSS 组织结构
+
+**文件**: `doc/web/css/` 目录
+
+**当前结构**:
+```
+css/
+├── variables.css   # CSS 变量定义
+├── base.css        # 基础样式和 Reset
+├── layout.css      # 布局样式
+├── components.css  # 组件样式
+└── responsive.css  # 响应式断点
+```
+
+**评价**:
+- 文件拆分合理，职责单一
+- 加载顺序正确（variables → base → layout → components → responsive）
+- 总大小约 21KB，符合性能要求
+
+**状态**: ✅ 优秀，无需修改
+
+---
+
+### 4. JavaScript 代码质量
+
+**文件**: `doc/web/js/main.js`
+
+**亮点**:
+1. ✅ 使用 IIFE 避免全局污染
+2. ✅ 使用 `'use strict'` 严格模式
+3. ✅ 事件监听使用 `DOMContentLoaded`
+4. ✅ 滚动事件使用 `requestAnimationFrame` 节流
+5. ✅ 支持 Clipboard API 和 execCommand 降级
+6. ✅ 代码注释清晰
+
+**建议优化**:
+1. 可选：添加 JSDoc 注释
+2. 可选：使用 ES6 模块化（需要构建工具支持）
+
+**状态**: ✅ 优秀，无需修改
+
+---
+
+### 5. 响应式设计
+
+**文件**: `doc/web/css/responsive.css`
+
+**断点设计**:
+| 断点 | 宽度 | 布局 |
+|------|------|------|
+| Desktop | > 1024px | 三栏布局 |
+| Tablet | 768px - 1024px | 侧边栏收窄 |
+| Mobile | < 768px | 侧边栏隐藏 |
+| Small Mobile | < 480px | 进一步简化 |
+
+**亮点**:
+- ✅ 支持 `prefers-reduced-motion` 减少动画
+- ✅ 支持打印样式
+- ✅ 移动端触摸区域 >= 44px
+
+**状态**: ✅ 优秀，无需修改
+
+---
+
+### 6. 性能优化
+
+**当前状态**:
+- ✅ CSS 文件总大小约 21KB
+- ✅ JS 文件约 7.5KB
+- ✅ 使用 CDN 加载 Prism.js
+- ✅ 图片使用内联 SVG
+
+**预估加载性能**:
+- 本地资源: ~30KB
+- CDN 资源 (Prism.js): ~15KB
+- 总计: ~45KB (符合 < 100KB 目标)
+
+**状态**: ✅ 符合性能要求
+
+---
+
+## 【代码亮点】
+
+1. **语义化 HTML**: 正确使用 HTML5 语义标签，SEO 友好
+2. **CSS 变量系统**: 完整的设计系统，易于主题定制
+3. **响应式设计**: 移动端优先，断点设计合理
+4. **可访问性**: 按钮有 aria-label，图片有 alt
+5. **安全性**: 代码复制使用 textContent，无 XSS 风险
+6. **性能**: 资源体积小，加载快
+7. **代码组织**: 文件拆分合理，职责单一
+8. **用户体验**: 支持键盘导航（Escape 关闭侧边栏）
+
+---
+
+## 【是否可以合并 + 原因】
+
+**结论**: ✅ **可以合并**
+
+**原因**:
+1. 无安全漏洞（XSS、注入等）
+2. 代码质量优秀，符合架构设计
+3. 响应式布局完善，移动端体验好
+4. 可访问性基本满足要求
+5. 性能符合预期（< 100KB）
+
+**建议后续优化**:
+1. 【P2】添加 Prism.js 本地 fallback
+2. 【P2】增强可访问性（添加 ARIA 属性）
+3. 【P3】添加 SRI 校验
+
+---
+
+## 审查清单
+
+| 检查项 | 状态 | 说明 |
+|--------|------|------|
+| HTML 语义化 | ✅ | 使用 header/nav/main/article/footer |
+| HTML 可访问性 | ✅ | aria-label, alt 属性完整 |
+| CSS 组织 | ✅ | 变量/基础/布局/组件/响应式分离 |
+| CSS 命名规范 | ✅ | BEM 风格，命名清晰 |
+| JS 安全性 | ✅ | 无 XSS 风险 |
+| JS 代码质量 | ✅ | IIFE, strict mode, 节流优化 |
+| 响应式布局 | ✅ | 桌面/平板/移动端适配 |
+| 性能优化 | ✅ | 资源体积 < 100KB |
+| 外部依赖 | ⚠️ | CDN 依赖，建议添加 fallback |
+
+---
+
+**任务完成标志**: T11 代码审查已完成，代码质量优秀，可以合并。
+
+**下一步**: 显式调用 `/team` 继续任务流程，启动 T12 (Tester) 进行功能测试。

@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // MigrationRecord represents a record in the migrations table

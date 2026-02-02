@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/migro/migro/pkg/driver"
+	"github.com/flyits/migro/pkg/driver"
 )
 
 // Config represents the migro configuration

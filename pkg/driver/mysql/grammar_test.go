@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // 测试目标需求: MySQL Grammar SQL 生成正确性

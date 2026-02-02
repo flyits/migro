@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/migro/migro/internal/config"
+	"github.com/flyits/migro/internal/config"
 	"github.com/spf13/cobra"
 )
 

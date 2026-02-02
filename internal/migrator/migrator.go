@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/migro/migro/pkg/driver"
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/pkg/driver"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // Migration represents a migration definition

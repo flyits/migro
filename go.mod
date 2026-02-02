@@ -1,4 +1,4 @@
-module github.com/migro/migro
+module github.com/flyits/migro
 
 go 1.25.4
 

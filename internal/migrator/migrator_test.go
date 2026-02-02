@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/migro/migro/pkg/driver"
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/pkg/driver"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // 测试目标需求: Migrator 迁移执行器功能正确性
@@ -17,30 +17,32 @@ import (
 // mockGrammar 模拟 Grammar 接口
 type mockGrammar struct{}
 
-func (g *mockGrammar) CompileCreate(table *schema.Table) string       { return "CREATE TABLE test" }
-func (g *mockGrammar) CompileAlter(table *schema.Table) []string      { return []string{"ALTER TABLE test"} }
-func (g *mockGrammar) CompileDrop(name string) string                 { return "DROP TABLE " + name }
-func (g *mockGrammar) CompileDropIfExists(name string) string         { return "DROP TABLE IF EXISTS " + name }
-func (g *mockGrammar) CompileRename(from, to string) string           { return "RENAME TABLE " + from + " TO " + to }
-func (g *mockGrammar) CompileHasTable(name string) (string, error)    { return "SELECT 1", nil }
-func (g *mockGrammar) TypeString(length int) string                   { return "VARCHAR(255)" }
-func (g *mockGrammar) TypeText() string                               { return "TEXT" }
-func (g *mockGrammar) TypeInteger() string                            { return "INT" }
-func (g *mockGrammar) TypeBigInteger() string                         { return "BIGINT" }
-func (g *mockGrammar) TypeSmallInteger() string                       { return "SMALLINT" }
-func (g *mockGrammar) TypeTinyInteger() string                        { return "TINYINT" }
-func (g *mockGrammar) TypeFloat() string                              { return "FLOAT" }
-func (g *mockGrammar) TypeDouble() string                             { return "DOUBLE" }
-func (g *mockGrammar) TypeDecimal(precision, scale int) string        { return "DECIMAL(10,2)" }
-func (g *mockGrammar) TypeBoolean() string                            { return "BOOLEAN" }
-func (g *mockGrammar) TypeDate() string                               { return "DATE" }
-func (g *mockGrammar) TypeDateTime() string                           { return "DATETIME" }
-func (g *mockGrammar) TypeTimestamp() string                          { return "TIMESTAMP" }
-func (g *mockGrammar) TypeTime() string                               { return "TIME" }
-func (g *mockGrammar) TypeJSON() string                               { return "JSON" }
-func (g *mockGrammar) TypeBinary() string                             { return "BLOB" }
-func (g *mockGrammar) TypeUUID() string                               { return "UUID" }
-func (g *mockGrammar) CompileColumn(col *schema.Column) string        { return col.Name + " VARCHAR(255)" }
+func (g *mockGrammar) CompileCreate(table *schema.Table) string  { return "CREATE TABLE test" }
+func (g *mockGrammar) CompileAlter(table *schema.Table) []string { return []string{"ALTER TABLE test"} }
+func (g *mockGrammar) CompileDrop(name string) string            { return "DROP TABLE " + name }
+func (g *mockGrammar) CompileDropIfExists(name string) string    { return "DROP TABLE IF EXISTS " + name }
+func (g *mockGrammar) CompileRename(from, to string) string {
+	return "RENAME TABLE " + from + " TO " + to
+}
+func (g *mockGrammar) CompileHasTable(name string) (string, error) { return "SELECT 1", nil }
+func (g *mockGrammar) TypeString(length int) string                { return "VARCHAR(255)" }
+func (g *mockGrammar) TypeText() string                            { return "TEXT" }
+func (g *mockGrammar) TypeInteger() string                         { return "INT" }
+func (g *mockGrammar) TypeBigInteger() string                      { return "BIGINT" }
+func (g *mockGrammar) TypeSmallInteger() string                    { return "SMALLINT" }
+func (g *mockGrammar) TypeTinyInteger() string                     { return "TINYINT" }
+func (g *mockGrammar) TypeFloat() string                           { return "FLOAT" }
+func (g *mockGrammar) TypeDouble() string                          { return "DOUBLE" }
+func (g *mockGrammar) TypeDecimal(precision, scale int) string     { return "DECIMAL(10,2)" }
+func (g *mockGrammar) TypeBoolean() string                         { return "BOOLEAN" }
+func (g *mockGrammar) TypeDate() string                            { return "DATE" }
+func (g *mockGrammar) TypeDateTime() string                        { return "DATETIME" }
+func (g *mockGrammar) TypeTimestamp() string                       { return "TIMESTAMP" }
+func (g *mockGrammar) TypeTime() string                            { return "TIME" }
+func (g *mockGrammar) TypeJSON() string                            { return "JSON" }
+func (g *mockGrammar) TypeBinary() string                          { return "BLOB" }
+func (g *mockGrammar) TypeUUID() string                            { return "UUID" }
+func (g *mockGrammar) CompileColumn(col *schema.Column) string     { return col.Name + " VARCHAR(255)" }
 func (g *mockGrammar) CompileIndex(tableName string, idx *schema.Index) string {
 	return "CREATE INDEX idx ON " + tableName
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/migro/migro/internal/cli"
+	"github.com/flyits/migro/internal/cli"
 )
 
 func main() {

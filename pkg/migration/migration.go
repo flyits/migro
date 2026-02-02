@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"github.com/migro/migro/internal/migrator"
+	"github.com/flyits/migro/internal/migrator"
 )
 
 // Migration defines the interface for database migrations

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // validIdentifier validates that a name contains only safe characters

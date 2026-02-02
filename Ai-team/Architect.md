@@ -568,4 +568,663 @@ func init() {
 
 **任务完成标志**: 本文档已完成系统架构设计，等待 Engineer 开始开发。
 
-**下一步**: 显式调用 `/team` 继续任务。
+---
+
+# T9: API 文档网页架构设计
+
+## 任务状态
+- **状态**: ✅ 已完成
+- **负责人**: Architect (Claude Opus 4.5)
+- **开始时间**: 2026-02-02
+- **完成时间**: 2026-02-02
+
+---
+
+## 1. 技术架构概述
+
+### 1.1 设计目标
+
+| 目标 | 说明 |
+|------|------|
+| **零构建依赖** | 纯静态文件，无需 Node.js、Webpack 等构建工具 |
+| **快速加载** | 首屏加载 < 2 秒，关键资源优先加载 |
+| **易于维护** | 组件化设计，内容与样式分离 |
+| **响应式** | 桌面端与移动端自适应布局 |
+
+### 1.2 技术选型决策
+
+| 技术领域 | 选型 | 决策理由 |
+|---------|------|---------|
+| **HTML** | 语义化 HTML5 | 标准规范，SEO 友好，无需编译 |
+| **CSS** | 原生 CSS + CSS Variables | 无框架依赖，变量系统支持主题切换 |
+| **JavaScript** | 原生 ES6+ | 现代浏览器原生支持，无需 polyfill |
+| **代码高亮** | Prism.js | 轻量（核心 2KB），支持 Go/YAML/Bash，CDN 加载 |
+| **图标** | 内联 SVG | 无外部依赖，可通过 CSS 控制颜色 |
+
+### 1.3 架构分层
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      表现层 (HTML)                           │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────────┐   │
+│  │ Header  │ │ Sidebar │ │ Content │ │     Footer      │   │
+│  └────┬────┘ └────┬────┘ └────┬────┘ └────────┬────────┘   │
+└───────┼───────────┼───────────┼────────────────┼────────────┘
+        │           │           │                │
+        ▼           ▼           ▼                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      样式层 (CSS)                            │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
+│  │ Variables│ │  Layout  │ │Components│ │  Responsive  │   │
+│  │ (主题)   │ │  (布局)  │ │ (组件)   │ │  (响应式)    │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      交互层 (JavaScript)                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │
+│  │ Sidebar  │ │   Code   │ │  Scroll  │ │   Mobile     │   │
+│  │ Toggle   │ │   Copy   │ │  Smooth  │ │   Menu       │   │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. 目录结构设计
+
+```
+/doc/web/
+├── index.html              # 首页
+├── getting-started.html    # 快速入门
+├── cli-reference.html      # CLI 命令参考
+├── schema-api.html         # Schema DSL API（最大页面）
+├── configuration.html      # 配置指南
+├── database-support.html   # 数据库支持
+├── best-practices.html     # 最佳实践
+├── examples.html           # 示例代码
+│
+├── css/
+│   ├── variables.css       # CSS 变量（颜色、字体、间距）
+│   ├── base.css            # 基础样式（reset、typography）
+│   ├── layout.css          # 布局样式（header、sidebar、content）
+│   ├── components.css      # 组件样式（code-block、table、callout）
+│   └── responsive.css      # 响应式断点
+│
+├── js/
+│   └── main.js             # 所有交互逻辑（单文件，< 5KB）
+│
+└── assets/
+    ├── logo.svg            # Migro Logo
+    └── favicon.ico         # 网站图标
+```
+
+### 2.1 文件职责说明
+
+| 文件 | 职责 | 预估大小 |
+|------|------|---------|
+| `variables.css` | 定义全局 CSS 变量，支持主题切换 | < 1KB |
+| `base.css` | CSS Reset + 基础排版样式 | < 2KB |
+| `layout.css` | 三栏布局（Header/Sidebar/Content） | < 3KB |
+| `components.css` | 可复用组件样式 | < 4KB |
+| `responsive.css` | 媒体查询断点 | < 2KB |
+| `main.js` | 侧边栏折叠、代码复制、平滑滚动 | < 5KB |
+
+**总计**: CSS ~12KB + JS ~5KB + Prism.js ~15KB (CDN) = **~32KB**
+
+---
+
+## 3. 组件设计
+
+### 3.1 Header 组件
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Logo] Migro                              [GitHub] [Menu]  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**结构说明**（非代码，仅用于设计说明）:
+- 固定在页面顶部（`position: fixed`）
+- 高度: 60px
+- 左侧: Logo + 项目名称
+- 右侧: GitHub 链接 + 移动端菜单按钮
+- 背景: 白色，底部 1px 边框
+
+### 3.2 Sidebar 组件
+
+```
+┌──────────────────┐
+│ 快速入门          │
+│ CLI 命令参考      │
+│ ▼ Schema API     │
+│   ├─ Table 构建器 │
+│   ├─ 列类型       │
+│   ├─ 列修饰符     │
+│   ├─ 索引        │
+│   └─ 外键        │
+│ 配置指南          │
+│ 数据库支持        │
+│ 最佳实践          │
+│ 示例代码          │
+└──────────────────┘
+```
+
+**结构说明**:
+- 固定在左侧（`position: fixed`）
+- 宽度: 260px
+- 支持二级菜单展开/折叠
+- 当前页面高亮显示
+- 移动端: 默认隐藏，点击菜单按钮滑出
+
+**交互行为**:
+1. 点击一级菜单: 跳转页面或展开子菜单
+2. 点击二级菜单: 跳转到页面锚点
+3. 当前页面自动高亮
+4. 移动端点击遮罩层关闭侧边栏
+
+### 3.3 Content 组件
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ # 页面标题                                                   │
+│                                                              │
+│ 正文内容...                                                  │
+│                                                              │
+│ ## 二级标题                                                  │
+│                                                              │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ ```go                                        [Copy]     │ │
+│ │ func main() {                                           │ │
+│ │     fmt.Println("Hello")                                │ │
+│ │ }                                                       │ │
+│ │ ```                                                     │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                              │
+│ | 列1 | 列2 | 列3 |                                         │
+│ |-----|-----|-----|                                         │
+│ | A   | B   | C   |                                         │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**结构说明**:
+- 主内容区域，左侧留出 Sidebar 宽度
+- 最大宽度: 900px，居中显示
+- 内边距: 40px（桌面端）/ 20px（移动端）
+
+### 3.4 Code Block 组件
+
+**结构说明**:
+- 深色背景（#1e1e1e 或 #282c34）
+- 右上角复制按钮
+- 左上角语言标签（Go / YAML / Bash）
+- 使用 Prism.js 语法高亮
+- 支持横向滚动（长代码行）
+
+**复制交互**:
+1. 点击复制按钮
+2. 按钮文字变为 "Copied!"
+3. 2 秒后恢复为 "Copy"
+
+### 3.5 Table 组件
+
+**结构说明**:
+- 全宽表格，响应式横向滚动
+- 表头背景: 浅灰色
+- 斑马纹行背景
+- 边框: 1px 浅灰色
+
+### 3.6 Callout 组件
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ ⚠️ 注意                                                      │
+│ SQLite 不支持 MODIFY COLUMN，需要重建表。                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**类型**:
+- `info`: 蓝色边框，信息提示
+- `warning`: 黄色边框，警告提示
+- `danger`: 红色边框，危险提示
+- `tip`: 绿色边框，技巧提示
+
+---
+
+## 4. CSS 架构设计
+
+### 4.1 CSS 变量定义
+
+```
+非代码，仅用于设计说明
+
+:root {
+  /* 颜色系统 */
+  --color-primary: #3b82f6;        /* 主色调：蓝色 */
+  --color-primary-dark: #2563eb;
+  --color-text: #1f2937;           /* 正文颜色 */
+  --color-text-light: #6b7280;     /* 次要文字 */
+  --color-bg: #ffffff;             /* 背景色 */
+  --color-bg-secondary: #f9fafb;   /* 次要背景 */
+  --color-border: #e5e7eb;         /* 边框色 */
+  --color-code-bg: #1e1e1e;        /* 代码块背景 */
+
+  /* 字体系统 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", Consolas, monospace;
+  --font-size-base: 16px;
+  --font-size-sm: 14px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+
+  /* 间距系统 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* 布局尺寸 */
+  --header-height: 60px;
+  --sidebar-width: 260px;
+  --content-max-width: 900px;
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+}
+```
+
+### 4.2 布局系统
+
+**三栏布局结构**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Header (fixed)                        │
+├──────────────┬──────────────────────────────────────────────┤
+│              │                                               │
+│   Sidebar    │                  Content                      │
+│   (fixed)    │                  (scrollable)                 │
+│              │                                               │
+│              │                                               │
+│              ├──────────────────────────────────────────────┤
+│              │                  Footer                       │
+└──────────────┴──────────────────────────────────────────────┘
+```
+
+**布局实现要点**:
+- Header: `position: fixed; top: 0; width: 100%; z-index: 100;`
+- Sidebar: `position: fixed; left: 0; top: 60px; width: 260px; height: calc(100vh - 60px);`
+- Content: `margin-left: 260px; margin-top: 60px; padding: 40px;`
+
+### 4.3 响应式断点
+
+| 断点 | 宽度 | 布局变化 |
+|------|------|---------|
+| Desktop | > 1024px | 三栏布局，Sidebar 固定显示 |
+| Tablet | 768px - 1024px | Sidebar 收窄至 200px |
+| Mobile | < 768px | Sidebar 隐藏，点击菜单按钮显示 |
+
+**移动端适配要点**:
+- Sidebar 默认隐藏，通过 `transform: translateX(-100%)` 实现
+- 点击菜单按钮添加 `.sidebar-open` 类，Sidebar 滑入
+- 显示遮罩层，点击遮罩关闭 Sidebar
+- Content 区域全宽显示
+
+---
+
+## 5. JavaScript 架构设计
+
+### 5.1 模块划分
+
+```
+main.js
+├── initSidebar()        # 侧边栏交互
+│   ├── toggleSubmenu()  # 展开/折叠子菜单
+│   ├── highlightCurrent() # 高亮当前页面
+│   └── mobileToggle()   # 移动端开关
+│
+├── initCodeCopy()       # 代码复制功能
+│   └── copyToClipboard() # 复制到剪贴板
+│
+├── initSmoothScroll()   # 平滑滚动
+│   └── scrollToAnchor() # 锚点跳转
+│
+└── initBackToTop()      # 返回顶部按钮
+```
+
+### 5.2 核心交互逻辑
+
+**侧边栏子菜单展开**:
+```
+非代码，仅用于设计说明
+
+1. 监听一级菜单点击事件
+2. 如果有子菜单:
+   - 切换 .expanded 类
+   - 子菜单高度从 0 过渡到 auto（使用 max-height 技巧）
+3. 如果无子菜单:
+   - 正常跳转页面
+```
+
+**代码复制**:
+```
+非代码，仅用于设计说明
+
+1. 为每个 <pre><code> 块动态添加复制按钮
+2. 点击按钮时:
+   - 获取 <code> 元素的 textContent
+   - 调用 navigator.clipboard.writeText()
+   - 按钮文字变为 "Copied!"
+   - 2 秒后恢复
+3. 降级处理: 不支持 Clipboard API 时使用 execCommand
+```
+
+**移动端侧边栏**:
+```
+非代码，仅用于设计说明
+
+1. 点击菜单按钮:
+   - 给 body 添加 .sidebar-open 类
+   - Sidebar 通过 CSS transform 滑入
+   - 显示遮罩层
+2. 点击遮罩层或关闭按钮:
+   - 移除 .sidebar-open 类
+   - Sidebar 滑出
+   - 隐藏遮罩层
+```
+
+### 5.3 Prism.js 集成
+
+**CDN 加载**:
+```
+非代码，仅用于设计说明
+
+<!-- 在 </body> 前加载 -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+```
+
+**支持的语言**:
+- `go`: Go 代码
+- `yaml`: 配置文件
+- `bash`: 命令行
+- `sql`: SQL 语句（可选）
+
+---
+
+## 6. 页面模板设计
+
+### 6.1 HTML 基础结构
+
+```
+非代码，仅用于设计说明
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>页面标题 - Migro 文档</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+
+    <!-- Prism.js 主题 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">...</header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">...</aside>
+
+    <!-- Overlay (移动端) -->
+    <div class="overlay"></div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <article class="article">
+            <!-- 页面内容 -->
+        </article>
+
+        <!-- Footer -->
+        <footer class="footer">...</footer>
+    </main>
+
+    <!-- Prism.js -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+
+    <!-- Main JS -->
+    <script src="js/main.js"></script>
+</body>
+</html>
+```
+
+### 6.2 Sidebar 导航结构
+
+```
+非代码，仅用于设计说明
+
+<nav class="nav">
+    <ul class="nav-list">
+        <li class="nav-item">
+            <a href="index.html" class="nav-link">首页</a>
+        </li>
+        <li class="nav-item">
+            <a href="getting-started.html" class="nav-link">快速入门</a>
+        </li>
+        <li class="nav-item">
+            <a href="cli-reference.html" class="nav-link">CLI 命令参考</a>
+        </li>
+        <li class="nav-item has-submenu">
+            <a href="schema-api.html" class="nav-link">
+                Schema API
+                <span class="nav-arrow">▼</span>
+            </a>
+            <ul class="nav-submenu">
+                <li><a href="schema-api.html#table-builder">Table 构建器</a></li>
+                <li><a href="schema-api.html#column-types">列类型</a></li>
+                <li><a href="schema-api.html#column-modifiers">列修饰符</a></li>
+                <li><a href="schema-api.html#indexes">索引</a></li>
+                <li><a href="schema-api.html#foreign-keys">外键</a></li>
+                <li><a href="schema-api.html#alter-table">ALTER TABLE</a></li>
+            </ul>
+        </li>
+        <!-- 更多菜单项... -->
+    </ul>
+</nav>
+```
+
+### 6.3 代码块结构
+
+```
+非代码，仅用于设计说明
+
+<div class="code-block">
+    <div class="code-header">
+        <span class="code-lang">go</span>
+        <button class="code-copy" data-clipboard-target="#code-1">Copy</button>
+    </div>
+    <pre><code id="code-1" class="language-go">
+func main() {
+    fmt.Println("Hello, Migro!")
+}
+    </code></pre>
+</div>
+```
+
+---
+
+## 7. 响应式设计方案
+
+### 7.1 断点策略
+
+```
+非代码，仅用于设计说明
+
+/* 移动端优先 */
+.sidebar { display: none; }
+.content { margin-left: 0; }
+
+/* 平板端 */
+@media (min-width: 768px) {
+    .sidebar {
+        display: block;
+        width: 200px;
+    }
+    .content {
+        margin-left: 200px;
+    }
+}
+
+/* 桌面端 */
+@media (min-width: 1024px) {
+    .sidebar {
+        width: 260px;
+    }
+    .content {
+        margin-left: 260px;
+    }
+}
+```
+
+### 7.2 移动端适配要点
+
+| 组件 | 桌面端 | 移动端 |
+|------|--------|--------|
+| Header | Logo + 导航链接 | Logo + 菜单按钮 |
+| Sidebar | 固定显示 | 隐藏，点击滑出 |
+| Content | 左侧留白 260px | 全宽显示 |
+| Code Block | 横向滚动 | 横向滚动 + 字体缩小 |
+| Table | 正常显示 | 横向滚动容器 |
+
+### 7.3 触摸优化
+
+- 点击区域最小 44x44px
+- 按钮间距足够，避免误触
+- 侧边栏支持滑动手势关闭（可选）
+
+---
+
+## 8. 性能优化策略
+
+### 8.1 资源加载优化
+
+| 策略 | 实现方式 |
+|------|---------|
+| CSS 内联关键样式 | 将 `variables.css` 和 `base.css` 内联到 `<head>` |
+| JS 延迟加载 | 将 `<script>` 放在 `</body>` 前 |
+| Prism.js CDN | 使用 jsDelivr CDN，支持 HTTP/2 |
+| 图片懒加载 | Logo 使用内联 SVG，无需额外请求 |
+
+### 8.2 缓存策略
+
+- 静态资源添加版本号: `style.css?v=1.0.0`
+- 设置长期缓存头（由服务器配置）
+- CDN 资源自带缓存
+
+### 8.3 预期性能指标
+
+| 指标 | 目标值 |
+|------|--------|
+| 首次内容绘制 (FCP) | < 1s |
+| 最大内容绘制 (LCP) | < 2s |
+| 累积布局偏移 (CLS) | < 0.1 |
+| 总资源大小 | < 100KB (不含 CDN) |
+
+---
+
+## 9. 开发指南
+
+### 9.1 Engineer 开发顺序建议
+
+1. **第一阶段: 基础框架**
+   - 创建目录结构
+   - 编写 CSS 变量和基础样式
+   - 实现三栏布局
+   - 完成 Header 和 Sidebar 组件
+
+2. **第二阶段: 核心页面**
+   - 首页 (index.html)
+   - 快速入门 (getting-started.html)
+   - CLI 命令参考 (cli-reference.html)
+
+3. **第三阶段: API 文档**
+   - Schema API (schema-api.html) - 最大页面
+   - 配置指南 (configuration.html)
+   - 数据库支持 (database-support.html)
+
+4. **第四阶段: 辅助页面**
+   - 最佳实践 (best-practices.html)
+   - 示例代码 (examples.html)
+
+5. **第五阶段: 交互完善**
+   - 代码复制功能
+   - 移动端适配
+   - 响应式测试
+
+### 9.2 内容来源
+
+所有文档内容从 `README.md` 提取，确保一致性:
+
+| 页面 | README.md 对应章节 |
+|------|-------------------|
+| 首页 | 特性 + 安装 + 快速入门 |
+| 快速入门 | 快速入门 |
+| CLI 命令参考 | CLI 命令参考 |
+| Schema API | Schema DSL API |
+| 配置指南 | 配置文件 |
+| 数据库支持 | 数据库差异 |
+| 最佳实践 | 最佳实践 |
+| 示例代码 | 完整迁移示例 |
+
+---
+
+## 10. 风险与缓解
+
+| 风险 | 影响 | 缓解措施 |
+|------|------|---------|
+| Prism.js CDN 不可用 | 代码无高亮 | 提供本地 fallback 文件 |
+| 移动端布局错乱 | 用户体验差 | 移动端优先开发，充分测试 |
+| 内容与 README 不同步 | 文档不准确 | 建立内容更新流程 |
+| 浏览器兼容性问题 | 部分功能失效 | 使用 CSS/JS 特性检测 |
+
+---
+
+## 11. 验收检查清单
+
+- [ ] 所有 8 个页面内容完整
+- [ ] 侧边栏导航正常，支持二级菜单
+- [ ] 代码高亮正常（Go/YAML/Bash）
+- [ ] 代码复制功能正常
+- [ ] 响应式布局正常（桌面/平板/移动）
+- [ ] 移动端侧边栏滑动正常
+- [ ] 页面加载速度 < 2 秒
+- [ ] 无 JavaScript 控制台错误
+- [ ] Chrome/Firefox/Safari/Edge 兼容
+
+---
+
+**任务完成标志**: T9 架构设计已完成，等待 Engineer 开始开发 (T10)。
+
+**下一步**: 显式调用 `/team` 继续任务流程。

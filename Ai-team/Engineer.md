@@ -11,7 +11,7 @@
 ## 已完成的功能模块
 
 ### 1. 项目骨架 ✅
-- 初始化 Go Module: `github.com/migro/migro`
+- 初始化 Go Module: `github.com/flyits/migro`
 - 按照架构文档创建目录结构
 - 配置依赖管理
 
@@ -222,8 +222,8 @@ package migrations
 
 import (
     "context"
-    "github.com/migro/migro/internal/migrator"
-    "github.com/migro/migro/pkg/schema"
+    "github.com/flyits/migro/internal/migrator"
+    "github.com/flyits/migro/pkg/schema"
 )
 
 type CreateUsersTable struct{}
@@ -273,4 +273,140 @@ func (m *CreateUsersTable) Down(ctx context.Context, e *migrator.Executor) error
 
 **任务完成标志**: 核心功能开发完成，Code Review 修复完成，等待测试。
 
-**下一步**: 显式调用 `/team` 继续任务。
+---
+
+# T10: API 文档网页前端开发
+
+## 任务状态
+- **状态**: ✅ 已完成
+- **负责人**: Engineer (Claude Opus 4.5)
+- **开始时间**: 2026-02-02
+- **完成时间**: 2026-02-02
+
+---
+
+## 已完成的工作
+
+### 1. 目录结构创建 ✅
+```
+/doc/web/
+├── index.html              # 首页
+├── getting-started.html    # 快速入门
+├── cli-reference.html      # CLI 命令参考
+├── schema-api.html         # Schema DSL API
+├── configuration.html      # 配置指南
+├── database-support.html   # 数据库支持
+├── best-practices.html     # 最佳实践
+├── examples.html           # 示例代码
+├── css/
+│   ├── variables.css       # CSS 变量
+│   ├── base.css            # 基础样式
+│   ├── layout.css          # 布局样式
+│   ├── components.css      # 组件样式
+│   └── responsive.css      # 响应式样式
+├── js/
+│   └── main.js             # 交互脚本
+└── assets/
+    └── logo.svg            # Logo
+```
+
+### 2. CSS 样式实现 ✅
+
+**variables.css**
+- 颜色系统（主色、文字、背景、边框）
+- 字体系统（无衬线、等宽）
+- 间距系统（xs/sm/md/lg/xl/2xl）
+- 布局尺寸（header高度、sidebar宽度、内容最大宽度）
+- 圆角、阴影、过渡动画
+- z-index 层级
+
+**base.css**
+- CSS Reset
+- 基础排版（h1-h6、p、a、ul/ol）
+- 代码样式（code、pre）
+- 滚动条样式
+- 选中样式
+
+**layout.css**
+- Header 固定顶部布局
+- Sidebar 固定左侧布局
+- 导航菜单（支持二级展开）
+- Content 主内容区域
+- Footer 页脚
+- 返回顶部按钮
+
+**components.css**
+- Code Block（带复制按钮、语言标签）
+- Table（响应式、斑马纹）
+- Callout（info/warning/danger/tip）
+- Feature Card
+- Hero Section
+- Button（primary/secondary）
+- TOC（目录）
+- Quick Links
+
+**responsive.css**
+- 桌面端（> 1024px）
+- 平板端（768px - 1024px）
+- 移动端（< 768px）
+- 小屏移动端（< 480px）
+- 打印样式
+- 减少动画偏好
+
+### 3. JavaScript 交互实现 ✅
+
+**main.js**
+- `initSidebar()` - 侧边栏交互
+  - 子菜单展开/折叠
+  - 当前页面高亮
+  - 移动端菜单开关
+- `initCodeCopy()` - 代码复制功能
+  - Clipboard API
+  - 降级处理（execCommand）
+  - 复制反馈动画
+- `initSmoothScroll()` - 平滑滚动
+  - 锚点跳转
+  - URL hash 更新
+- `initBackToTop()` - 返回顶部按钮
+  - 滚动显示/隐藏
+  - 节流优化
+
+### 4. HTML 页面实现 ✅
+
+| 页面 | 内容 | 状态 |
+|------|------|------|
+| index.html | 首页、特性、安装、快速示例 | ✅ |
+| getting-started.html | 快速入门教程（5步） | ✅ |
+| cli-reference.html | 7个CLI命令完整文档 | ✅ |
+| schema-api.html | Schema DSL API（最大页面） | ✅ |
+| configuration.html | 配置文件、环境变量 | ✅ |
+| database-support.html | 数据库差异、类型映射 | ✅ |
+| best-practices.html | 8条最佳实践 | ✅ |
+| examples.html | 6个完整迁移示例 | ✅ |
+
+### 5. 技术特性 ✅
+
+- **代码高亮**: Prism.js（Go/YAML/Bash）
+- **响应式**: 桌面/平板/移动端自适应
+- **代码复制**: 一键复制，带反馈
+- **侧边栏**: 二级菜单展开，当前页高亮
+- **移动端**: 侧边栏滑出，遮罩层
+- **无构建依赖**: 纯静态文件
+
+---
+
+## 验收检查
+
+- [x] 所有 8 个页面内容完整
+- [x] 侧边栏导航正常，支持二级菜单
+- [x] 代码高亮正常（Go/YAML/Bash）
+- [x] 代码复制功能正常
+- [x] 响应式布局正常（桌面/平板/移动）
+- [x] 移动端侧边栏滑动正常
+- [x] 无 JavaScript 错误
+
+---
+
+**任务完成标志**: T10 前端页面开发已完成。
+
+**下一步**: 显式调用 `/team` 继续任务流程。

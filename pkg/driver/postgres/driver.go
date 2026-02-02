@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/flyits/migro/pkg/driver"
+	"github.com/flyits/migro/pkg/schema"
 	_ "github.com/lib/pq"
-	"github.com/migro/migro/pkg/driver"
-	"github.com/migro/migro/pkg/schema"
 )
 
 func init() {

@@ -14,13 +14,13 @@
 ## 安装
 
 ```bash
-go install github.com/migro/migro/cmd/migro@latest
+go install github.com/flyits/migro/cmd/migro@latest
 ```
 
 或者从源码构建：
 
 ```bash
-git clone https://github.com/migro/migro.git
+git clone https://github.com/flyits/migro.git
 cd migro
 go build -o migro ./cmd/migro
 ```
@@ -52,8 +52,8 @@ package migrations
 
 import (
     "context"
-    "github.com/migro/migro/internal/migrator"
-    "github.com/migro/migro/pkg/schema"
+    "github.com/flyits/migro/internal/migrator"
+    "github.com/flyits/migro/pkg/schema"
 )
 
 type CreateUsersTable struct{}
@@ -410,6 +410,9 @@ e.AlterTable(ctx, "users", func(t *schema.Table) {
     // 重命名列
     t.RenameColumn("old_name", "new_name")
 
+    // 修改列类型
+    t.ChangeText("description")  // 将 description 列改为 TEXT 类型
+
     // 添加索引
     t.Index("phone")
 
@@ -423,6 +426,94 @@ e.AlterTable(ctx, "users", func(t *schema.Table) {
     t.DropForeign("fk_old")
 })
 ```
+
+---
+
+### 修改列类型
+
+使用 `Change*` 系列方法修改现有列的类型。这些方法会生成 `ALTER TABLE ... MODIFY COLUMN` 语句。
+
+#### 基本用法
+
+```go
+e.AlterTable(ctx, "users", func(t *schema.Table) {
+    // 将 VARCHAR 改为 TEXT
+    t.ChangeText("bio")
+
+    // 修改 VARCHAR 长度
+    t.ChangeString("email", 320)
+
+    // 将 INT 改为 BIGINT
+    t.ChangeBigInteger("view_count").Unsigned()
+
+    // 修改 DECIMAL 精度
+    t.ChangeDecimal("price", 10, 2).Default(0.00)
+})
+```
+
+#### 修改列类型方法
+
+| 方法 | 说明 | 生成的 SQL (MySQL) |
+|------|------|-------------------|
+| `ChangeColumn(name, type)` | 通用列类型修改 | `MODIFY COLUMN name TYPE` |
+| `ChangeString(name, length)` | 修改为 VARCHAR | `MODIFY COLUMN name VARCHAR(length)` |
+| `ChangeText(name)` | 修改为 TEXT | `MODIFY COLUMN name TEXT` |
+| `ChangeInteger(name)` | 修改为 INT | `MODIFY COLUMN name INT` |
+| `ChangeBigInteger(name)` | 修改为 BIGINT | `MODIFY COLUMN name BIGINT` |
+| `ChangeSmallInteger(name)` | 修改为 SMALLINT | `MODIFY COLUMN name SMALLINT` |
+| `ChangeTinyInteger(name)` | 修改为 TINYINT | `MODIFY COLUMN name TINYINT` |
+| `ChangeFloat(name)` | 修改为 FLOAT | `MODIFY COLUMN name FLOAT` |
+| `ChangeDouble(name)` | 修改为 DOUBLE | `MODIFY COLUMN name DOUBLE` |
+| `ChangeDecimal(name, p, s)` | 修改为 DECIMAL | `MODIFY COLUMN name DECIMAL(p,s)` |
+| `ChangeBoolean(name)` | 修改为 BOOLEAN | `MODIFY COLUMN name TINYINT(1)` |
+| `ChangeDate(name)` | 修改为 DATE | `MODIFY COLUMN name DATE` |
+| `ChangeDateTime(name)` | 修改为 DATETIME | `MODIFY COLUMN name DATETIME` |
+| `ChangeTimestamp(name)` | 修改为 TIMESTAMP | `MODIFY COLUMN name TIMESTAMP` |
+| `ChangeTime(name)` | 修改为 TIME | `MODIFY COLUMN name TIME` |
+| `ChangeJSON(name)` | 修改为 JSON | `MODIFY COLUMN name JSON` |
+| `ChangeBinary(name)` | 修改为 BINARY/BLOB | `MODIFY COLUMN name BLOB` |
+| `ChangeUUID(name)` | 修改为 UUID | `MODIFY COLUMN name CHAR(36)` |
+
+#### 链式调用
+
+所有 `Change*` 方法返回 `*Column`，支持链式调用修饰符：
+
+```go
+t.ChangeBigInteger("user_id").Unsigned().Nullable().Comment("用户ID")
+t.ChangeString("email", 320).Unique().Default("")
+t.ChangeDecimal("amount", 12, 4).Nullable()
+```
+
+#### 完整迁移示例
+
+```go
+// Up: 修改列类型
+func (m *ModifyColumnsInUsers) Up(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "users", func(t *schema.Table) {
+        t.ChangeText("bio")                              // VARCHAR -> TEXT
+        t.ChangeBigInteger("follower_count").Unsigned()  // INT -> BIGINT UNSIGNED
+        t.ChangeString("username", 100).Unique()         // 修改长度并添加唯一约束
+    })
+}
+
+// Down: 恢复原类型
+func (m *ModifyColumnsInUsers) Down(ctx context.Context, e *migrator.Executor) error {
+    return e.AlterTable(ctx, "users", func(t *schema.Table) {
+        t.ChangeString("bio", 500)           // TEXT -> VARCHAR(500)
+        t.ChangeInteger("follower_count")    // BIGINT -> INT
+        t.ChangeString("username", 50)       // 恢复原长度
+    })
+}
+```
+
+#### 注意事项
+
+1. **数据兼容性**：修改列类型时确保现有数据与新类型兼容
+2. **SQLite 限制**：SQLite 不支持 `MODIFY COLUMN`，需要重建表
+3. **大表操作**：对于大表，考虑使用在线 DDL 避免锁表：
+   ```go
+   e.Raw(ctx, "ALTER TABLE users MODIFY COLUMN bio TEXT, ALGORITHM=INPLACE, LOCK=NONE")
+   ```
 
 ---
 

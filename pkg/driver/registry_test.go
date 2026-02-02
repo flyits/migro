@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // 测试目标需求: 驱动注册表功能正确性
@@ -17,10 +17,10 @@ type mockDriver struct {
 	name string
 }
 
-func (m *mockDriver) Connect(config *Config) error                                   { return nil }
-func (m *mockDriver) Close() error                                                   { return nil }
-func (m *mockDriver) DB() *sql.DB                                                    { return nil }
-func (m *mockDriver) Begin(ctx context.Context) (Transaction, error)                 { return nil, nil }
+func (m *mockDriver) Connect(config *Config) error                   { return nil }
+func (m *mockDriver) Close() error                                   { return nil }
+func (m *mockDriver) DB() *sql.DB                                    { return nil }
+func (m *mockDriver) Begin(ctx context.Context) (Transaction, error) { return nil, nil }
 func (m *mockDriver) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	return nil, nil
 }
@@ -30,12 +30,12 @@ func (m *mockDriver) Query(ctx context.Context, query string, args ...interface{
 func (m *mockDriver) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	return nil
 }
-func (m *mockDriver) CreateTable(ctx context.Context, table *schema.Table) error  { return nil }
-func (m *mockDriver) AlterTable(ctx context.Context, table *schema.Table) error   { return nil }
-func (m *mockDriver) DropTable(ctx context.Context, name string) error            { return nil }
-func (m *mockDriver) DropTableIfExists(ctx context.Context, name string) error    { return nil }
-func (m *mockDriver) HasTable(ctx context.Context, name string) (bool, error)     { return false, nil }
-func (m *mockDriver) RenameTable(ctx context.Context, from, to string) error      { return nil }
+func (m *mockDriver) CreateTable(ctx context.Context, table *schema.Table) error { return nil }
+func (m *mockDriver) AlterTable(ctx context.Context, table *schema.Table) error  { return nil }
+func (m *mockDriver) DropTable(ctx context.Context, name string) error           { return nil }
+func (m *mockDriver) DropTableIfExists(ctx context.Context, name string) error   { return nil }
+func (m *mockDriver) HasTable(ctx context.Context, name string) (bool, error)    { return false, nil }
+func (m *mockDriver) RenameTable(ctx context.Context, from, to string) error     { return nil }
 func (m *mockDriver) CreateMigrationsTable(ctx context.Context, tableName string) error {
 	return nil
 }

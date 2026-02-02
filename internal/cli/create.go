@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/migro/migro/internal/config"
+	"github.com/flyits/migro/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -113,8 +113,8 @@ func generateMigrationTemplate(name, tableName, timestamp string) string {
 	return fmt.Sprintf(`package migrations
 
 import (
-	"github.com/migro/migro/internal/migrator"
-	"github.com/migro/migro/pkg/schema"
+	"github.com/flyits/migro/internal/migrator"
+	"github.com/flyits/migro/pkg/schema"
 )
 
 // %s migration

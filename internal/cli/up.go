@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/migro/migro/internal/config"
-	"github.com/migro/migro/internal/migrator"
-	"github.com/migro/migro/pkg/driver"
-	_ "github.com/migro/migro/pkg/driver/mysql"
-	_ "github.com/migro/migro/pkg/driver/postgres"
-	_ "github.com/migro/migro/pkg/driver/sqlite"
+	"github.com/flyits/migro/internal/config"
+	"github.com/flyits/migro/internal/migrator"
+	"github.com/flyits/migro/pkg/driver"
+	_ "github.com/flyits/migro/pkg/driver/mysql"
+	_ "github.com/flyits/migro/pkg/driver/postgres"
+	_ "github.com/flyits/migro/pkg/driver/sqlite"
 	"github.com/spf13/cobra"
 )
 
