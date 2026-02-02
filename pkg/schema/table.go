@@ -198,6 +198,108 @@ func (t *Table) RenameColumn(from, to string) {
 	t.RenameColumns[from] = to
 }
 
+// ChangeColumn modifies an existing column's type and attributes (ALTER TABLE)
+// This method creates a column definition with the Change flag set to true
+func (t *Table) ChangeColumn(name string, colType ColumnType) *Column {
+	col := &Column{
+		Name:   name,
+		Type:   colType,
+		Change: true,
+	}
+	t.Columns = append(t.Columns, col)
+	return col
+}
+
+// ChangeString modifies a column to VARCHAR type
+func (t *Table) ChangeString(name string, length int) *Column {
+	col := t.ChangeColumn(name, TypeString)
+	col.Length = length
+	return col
+}
+
+// ChangeText modifies a column to TEXT type
+func (t *Table) ChangeText(name string) *Column {
+	return t.ChangeColumn(name, TypeText)
+}
+
+// ChangeInteger modifies a column to INT type
+func (t *Table) ChangeInteger(name string) *Column {
+	return t.ChangeColumn(name, TypeInteger)
+}
+
+// ChangeBigInteger modifies a column to BIGINT type
+func (t *Table) ChangeBigInteger(name string) *Column {
+	return t.ChangeColumn(name, TypeBigInteger)
+}
+
+// ChangeSmallInteger modifies a column to SMALLINT type
+func (t *Table) ChangeSmallInteger(name string) *Column {
+	return t.ChangeColumn(name, TypeSmallInteger)
+}
+
+// ChangeTinyInteger modifies a column to TINYINT type
+func (t *Table) ChangeTinyInteger(name string) *Column {
+	return t.ChangeColumn(name, TypeTinyInteger)
+}
+
+// ChangeFloat modifies a column to FLOAT type
+func (t *Table) ChangeFloat(name string) *Column {
+	return t.ChangeColumn(name, TypeFloat)
+}
+
+// ChangeDouble modifies a column to DOUBLE type
+func (t *Table) ChangeDouble(name string) *Column {
+	return t.ChangeColumn(name, TypeDouble)
+}
+
+// ChangeDecimal modifies a column to DECIMAL type with precision and scale
+func (t *Table) ChangeDecimal(name string, precision, scale int) *Column {
+	col := t.ChangeColumn(name, TypeDecimal)
+	col.Precision = precision
+	col.Scale = scale
+	return col
+}
+
+// ChangeBoolean modifies a column to BOOLEAN type
+func (t *Table) ChangeBoolean(name string) *Column {
+	return t.ChangeColumn(name, TypeBoolean)
+}
+
+// ChangeDate modifies a column to DATE type
+func (t *Table) ChangeDate(name string) *Column {
+	return t.ChangeColumn(name, TypeDate)
+}
+
+// ChangeDateTime modifies a column to DATETIME type
+func (t *Table) ChangeDateTime(name string) *Column {
+	return t.ChangeColumn(name, TypeDateTime)
+}
+
+// ChangeTimestamp modifies a column to TIMESTAMP type
+func (t *Table) ChangeTimestamp(name string) *Column {
+	return t.ChangeColumn(name, TypeTimestamp)
+}
+
+// ChangeTime modifies a column to TIME type
+func (t *Table) ChangeTime(name string) *Column {
+	return t.ChangeColumn(name, TypeTime)
+}
+
+// ChangeJSON modifies a column to JSON type
+func (t *Table) ChangeJSON(name string) *Column {
+	return t.ChangeColumn(name, TypeJSON)
+}
+
+// ChangeBinary modifies a column to BINARY/BLOB type
+func (t *Table) ChangeBinary(name string) *Column {
+	return t.ChangeColumn(name, TypeBinary)
+}
+
+// ChangeUUID modifies a column to UUID type
+func (t *Table) ChangeUUID(name string) *Column {
+	return t.ChangeColumn(name, TypeUUID)
+}
+
 // SetEngine sets the storage engine (MySQL only)
 func (t *Table) SetEngine(engine string) *Table {
 	t.Engine = engine

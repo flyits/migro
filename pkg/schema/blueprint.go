@@ -37,6 +37,26 @@ type Blueprint interface {
 	DropIndex(name string)
 	DropForeign(name string)
 	RenameColumn(from, to string)
+
+	// Column modification operations
+	ChangeColumn(name string, colType ColumnType) *Column
+	ChangeString(name string, length int) *Column
+	ChangeText(name string) *Column
+	ChangeInteger(name string) *Column
+	ChangeBigInteger(name string) *Column
+	ChangeSmallInteger(name string) *Column
+	ChangeTinyInteger(name string) *Column
+	ChangeFloat(name string) *Column
+	ChangeDouble(name string) *Column
+	ChangeDecimal(name string, precision, scale int) *Column
+	ChangeBoolean(name string) *Column
+	ChangeDate(name string) *Column
+	ChangeDateTime(name string) *Column
+	ChangeTimestamp(name string) *Column
+	ChangeTime(name string) *Column
+	ChangeJSON(name string) *Column
+	ChangeBinary(name string) *Column
+	ChangeUUID(name string) *Column
 }
 
 // Ensure Table implements Blueprint
