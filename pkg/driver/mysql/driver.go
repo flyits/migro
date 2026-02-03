@@ -18,8 +18,9 @@ func init() {
 
 // Driver implements the MySQL database driver
 type Driver struct {
-	db      *sql.DB
-	grammar *Grammar
+	db             *sql.DB
+	grammar        *Grammar
+	ownsConnection bool
 }
 
 // NewDriver creates a new MySQL driver instance
@@ -56,14 +57,31 @@ func (d *Driver) Connect(config *driver.Config) error {
 	}
 
 	d.db = db
+	d.ownsConnection = true
 	return nil
 }
 
 // Close closes the database connection
 func (d *Driver) Close() error {
-	if d.db != nil {
+	if d.db != nil && d.ownsConnection {
 		return d.db.Close()
 	}
+	return nil
+}
+
+// ConnectWithDB uses an existing database connection.
+// The caller retains ownership of the connection and is responsible for closing it.
+func (d *Driver) ConnectWithDB(db *sql.DB) error {
+	if db == nil {
+		return fmt.Errorf("mysql: database connection is nil")
+	}
+
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("mysql: failed to ping database: %w", err)
+	}
+
+	d.db = db
+	d.ownsConnection = false
 	return nil
 }
 
