@@ -63,8 +63,16 @@
         <li class="nav-item">
           <a href="configuration.html" class="nav-link">配置指南</a>
         </li>
-        <li class="nav-item">
-          <a href="database-support.html" class="nav-link">数据库支持</a>
+        <li class="nav-item has-submenu">
+          <a href="database-support.html" class="nav-link">
+            数据库支持
+            <span class="nav-arrow">▼</span>
+          </a>
+          <ul class="nav-submenu">
+            <li><a href="database-support.html#transaction-ddl" class="nav-link">事务 DDL</a></li>
+            <li><a href="database-support.html#type-mapping" class="nav-link">类型映射</a></li>
+            <li><a href="database-support.html#external-connection" class="nav-link">外部连接支持</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a href="best-practices.html" class="nav-link">最佳实践</a>
@@ -95,6 +103,7 @@
           <li><a href="#write">4. 编写迁移</a></li>
           <li><a href="#run">5. 执行迁移</a></li>
           <li><a href="#status">6. 查看状态</a></li>
+          <li><a href="#external-connection">7. 使用外部连接</a></li>
         </ul>
       </div>
 
@@ -236,6 +245,68 @@ func (m *CreateUsersTable) Down(ctx context.Context, e *migrator.Executor) error
 +----+----------------------------------------+-------+---------------------+
 | 1  | 20260202150405_create_users_table      | 1     | 2026-02-02 15:04:05 |
 +----+----------------------------------------+-------+---------------------+</code></pre>
+      </div>
+
+      <h2 id="external-connection" class="section-anchor">7. 使用外部连接</h2>
+      <p>如果你的项目已有数据库连接，可以直接传入 Migro 使用：</p>
+
+      <h3>使用 *sql.DB</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">import (
+    "database/sql"
+    "github.com/flyits/migro/pkg/driver/mysql"
+    "github.com/flyits/migro/pkg/migrator"
+)
+
+// 你已有的数据库连接
+existingDB, _ := sql.Open("mysql", dsn)
+defer existingDB.Close()
+
+// 创建驱动并传入连接
+drv := mysql.NewDriver()
+drv.ConnectWithDB(existingDB)
+defer drv.Close() // 不会关闭 existingDB
+
+// 执行迁移
+m := migrator.NewMigrator(drv, "./migrations", "migrations")
+m.Up(ctx, 0)</code></pre>
+      </div>
+
+      <h3>使用 GORM</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">go</span>
+          <button class="code-copy">Copy</button>
+        </div>
+        <pre><code class="language-go">import (
+    migrogorm "github.com/flyits/migro/pkg/driver/gorm"
+    "github.com/flyits/migro/pkg/driver/mysql"
+    "github.com/flyits/migro/pkg/migrator"
+    "gorm.io/gorm"
+)
+
+// 你已有的 GORM 实例
+gormDB, _ := gorm.Open(...)
+
+// 创建驱动并通过 GORM 连接
+drv := mysql.NewDriver()
+migrogorm.ConnectDriver(drv, gormDB)
+defer drv.Close() // 不会关闭 GORM 连接
+
+// 执行迁移
+m := migrator.NewMigrator(drv, "./migrations", "migrations")
+m.Up(ctx, 0)</code></pre>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">💡 连接所有权</div>
+        <div class="callout-content">
+          <p>使用 <code>ConnectWithDB</code> 或 <code>ConnectDriver</code> 时，调用方保留连接所有权。<code>drv.Close()</code> 不会关闭外部传入的连接。</p>
+        </div>
       </div>
 
       <hr>

@@ -63,8 +63,16 @@
         <li class="nav-item">
           <a href="configuration.html" class="nav-link">配置指南</a>
         </li>
-        <li class="nav-item">
-          <a href="database-support.html" class="nav-link">数据库支持</a>
+        <li class="nav-item has-submenu">
+          <a href="database-support.html" class="nav-link">
+            数据库支持
+            <span class="nav-arrow">▼</span>
+          </a>
+          <ul class="nav-submenu">
+            <li><a href="database-support.html#transaction-ddl" class="nav-link">事务 DDL</a></li>
+            <li><a href="database-support.html#type-mapping" class="nav-link">类型映射</a></li>
+            <li><a href="database-support.html#external-connection" class="nav-link">外部连接支持</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a href="best-practices.html" class="nav-link">最佳实践</a>
@@ -122,6 +130,10 @@
           <div class="feature-card">
             <h3>👁️ Dry Run 模式</h3>
             <p>预览 SQL 而不执行，安全地检查迁移内容。</p>
+          </div>
+          <div class="feature-card">
+            <h3>🔌 外部连接支持</h3>
+            <p>支持传入已有的 <code>*sql.DB</code> 或 GORM 连接，轻松集成现有项目。</p>
           </div>
         </div>
       </section>
