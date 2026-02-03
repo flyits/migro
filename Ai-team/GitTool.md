@@ -236,3 +236,195 @@ db76aaa feat: Initial implementation of Migro database migration tool
 **任务完成标志**: T13 Git 提交已完成，API 文档网页已记录到版本历史。
 
 **下一步**: 显式调用 `/team` 继续任务流程。
+
+---
+
+# ConnectWithDB 和 GORM 适配 API Git 提交
+
+## 任务状态
+- **状态**: ✅ 已完成
+- **负责人**: Git Tool (Claude Opus 4.5)
+- **执行时间**: 2026-02-03
+
+---
+
+## 操作背景
+
+Engineer 完成了 ConnectWithDB 和 GORM 适配 API 的实现，Code Reviewer 审查通过（结论：可以合并），Tester 测试通过，需要将变更提交到 Git 仓库。
+
+### 变更文件清单
+
+| 文件 | 类型 | 说明 |
+|-----|------|------|
+| `pkg/driver/mysql/driver.go` | 修改 | 新增 ConnectWithDB 方法和 ownsConnection 字段 |
+| `pkg/driver/postgres/driver.go` | 修改 | 新增 ConnectWithDB 方法和 ownsConnection 字段 |
+| `pkg/driver/sqlite/driver.go` | 修改 | 新增 ConnectWithDB 方法和 ownsConnection 字段 |
+| `pkg/driver/gorm/adapter.go` | 新增 | GORM 适配包，提供 ConnectDriver 函数 |
+| `pkg/driver/gorm/adapter_test.go` | 新增 | GORM 适配包测试 |
+| `pkg/driver/sqlite/connect_test.go` | 新增 | SQLite ConnectWithDB 测试 |
+| `go.mod` | 修改 | 新增 GORM 依赖 |
+| `go.sum` | 修改 | 依赖校验和更新 |
+
+---
+
+## 执行的 Git 操作
+
+### 1. 检查当前状态
+
+```bash
+git status
+```
+
+**结果**:
+- 分支: `master`
+- 3 个修改的驱动文件
+- 2 个新增的 GORM 适配文件
+- 1 个新增的测试文件
+- go.mod/go.sum 依赖更新
+
+### 2. 暂存功能代码文件
+
+```bash
+git add pkg/driver/mysql/driver.go \
+    pkg/driver/postgres/driver.go \
+    pkg/driver/sqlite/driver.go \
+    pkg/driver/gorm/ \
+    pkg/driver/sqlite/connect_test.go \
+    go.mod go.sum
+```
+
+**说明**: 明确指定功能代码文件，与文档分开提交。
+
+### 3. 创建功能提交
+
+```bash
+git commit -m "feat(driver): add ConnectWithDB and GORM adapter for external connections
+
+Add support for using existing database connections with Migro drivers:
+
+- Add ConnectWithDB(*sql.DB) method to mysql, postgres, sqlite drivers
+- Add ownsConnection field to track connection ownership
+- Modify Close() to only close self-owned connections
+- Add new pkg/driver/gorm package with ConnectDriver helper
+- Add unit tests for ConnectWithDB and connection ownership
+
+This allows users to:
+- Reuse existing connection pools
+- Share connections with GORM
+- Maintain control over connection lifecycle
+
+Connection ownership semantics:
+- Connect(config): driver owns connection, Close() will close it
+- ConnectWithDB(db): caller owns connection, Close() is no-op
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+```
+
+**结果**:
+- Commit ID: `859701a`
+- 8 files changed, 386 insertions(+), 9 deletions(-)
+
+### 4. 暂存文档文件
+
+```bash
+git add Ai-team/
+```
+
+### 5. 创建文档提交
+
+```bash
+git commit -m "docs(ai-team): add collaboration docs for ConnectWithDB feature
+
+Add team collaboration documentation for the ConnectWithDB feature:
+
+- Producer.md: Requirements analysis and API design
+- Architect.md: Architecture design decisions
+- Engineer.md: Implementation records
+- CodeReviewer.md: Code review report
+- Tester.md: Test report
+- APIDoc.md: API documentation
+- Leader.md: Task coordination
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+```
+
+**结果**:
+- Commit ID: `82b07c6`
+- 7 files changed, 1154 insertions(+), 3037 deletions(-)
+
+---
+
+## 提交历史
+
+```
+82b07c6 docs(ai-team): add collaboration docs for ConnectWithDB feature
+859701a feat(driver): add ConnectWithDB and GORM adapter for external connections
+8404bad refactor: rename module path to github.com/flyits/migro
+bc4de21 docs: add API documentation website
+088a5d2 test: improve test coverage for migrator and driver packages
+```
+
+---
+
+## 当前仓库状态
+
+| 项目 | 状态 |
+|-----|------|
+| **分支** | `master` |
+| **本地状态** | 领先 `origin/master` 2 个提交 |
+| **工作区** | 干净 (nothing to commit) |
+| **远程推送** | 待执行 (可选) |
+
+---
+
+## 推送说明
+
+当前提交已在本地完成。如需推送到远程仓库：
+
+```bash
+git push origin master
+```
+
+**风险评估**: 低风险
+- 新增 API 为纯新增功能，不影响现有代码
+- 代码审查通过，测试全部通过
+- 向后兼容，可安全推送
+
+---
+
+## 操作总结
+
+| 操作 | 状态 | 说明 |
+|-----|------|------|
+| 检查 Git 状态 | ✅ | 确认变更文件 |
+| 暂存功能代码 | ✅ | 8 个文件已暂存 |
+| 创建功能提交 | ✅ | Commit ID: 859701a |
+| 暂存文档文件 | ✅ | 7 个文件已暂存 |
+| 创建文档提交 | ✅ | Commit ID: 82b07c6 |
+| 验证提交 | ✅ | 工作区干净 |
+| 推送远程 | ⏸️ | 待用户确认 |
+
+---
+
+## 回滚说明
+
+如需回滚本次提交：
+
+```bash
+# 回滚文档提交（保留功能代码）
+git revert 82b07c6
+
+# 回滚功能提交
+git revert 859701a
+
+# 或一次性回滚两个提交
+git revert 82b07c6 859701a
+```
+
+**说明**: 使用 `git revert` 而非 `git reset`，确保历史可追溯且安全。
+
+---
+
+**任务完成标志**: Git 提交已完成，ConnectWithDB 和 GORM 适配 API 已记录到版本历史。
+
+**下一步**: 显式调用 `/team` 继续任务流程。
