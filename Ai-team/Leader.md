@@ -29,11 +29,11 @@
 - [x] 4. Code Reviewer - 代码审查 ✅ 完成
 - [x] 5. Tester - 测试验证 ✅ 完成
 - [x] 6. API Doc - API 文档 ✅ 完成
-- [ ] 7. Git Tool - Git 提交
+- [x] 7. Git Tool - Git 提交 ✅ 完成
 
 ## 当前执行角色
 
-**Git Tool** - Git 提交
+**无** - 所有任务已完成
 
 ## 执行日志
 
@@ -68,3 +68,81 @@
   - 连接所有权语义说明完整
   - 使用示例和错误处理说明完整
 - 开始调度 Git Tool 进行代码提交
+- Git Tool 完成：提交记录已输出到 `Ai-team/GitTool.md`
+  - 功能提交: `859701a` feat(driver): add ConnectWithDB and GORM adapter
+  - 文档提交: `882e4ce` docs(ai-team): add collaboration docs
+  - 工作区干净，待推送到远程
+
+---
+
+## 最终任务报告
+
+### 任务完成状态：✅ 全部完成
+
+### 交付成果
+
+| 类别 | 交付物 | 状态 |
+|------|--------|------|
+| **代码** | `pkg/driver/mysql/driver.go` - ConnectWithDB 实现 | ✅ |
+| **代码** | `pkg/driver/postgres/driver.go` - ConnectWithDB 实现 | ✅ |
+| **代码** | `pkg/driver/sqlite/driver.go` - ConnectWithDB 实现 | ✅ |
+| **代码** | `pkg/driver/gorm/adapter.go` - GORM 适配包 | ✅ |
+| **测试** | `pkg/driver/gorm/adapter_test.go` - GORM 适配测试 | ✅ |
+| **测试** | `pkg/driver/sqlite/connect_test.go` - ConnectWithDB 测试 | ✅ |
+| **文档** | `Ai-team/APIDoc.md` - API 使用文档 | ✅ |
+| **Git** | 2 个提交已创建，待推送 | ✅ |
+
+### 新增 API 摘要
+
+#### 1. ConnectWithDB (各驱动)
+```go
+func (d *Driver) ConnectWithDB(db *sql.DB) error
+```
+- 允许传入已有的 `*sql.DB` 连接
+- 调用方保留连接所有权
+- `Close()` 不会关闭外部传入的连接
+
+#### 2. ConnectDriver (GORM 适配)
+```go
+func ConnectDriver(drv DBConnector, gormDB *gorm.DB) error
+```
+- 允许传入 GORM 实例
+- 内部提取 `*sql.DB` 并调用 `ConnectWithDB`
+
+### 架构决策记录
+
+1. **不修改 Driver 接口** - 保持接口稳定性，新方法在具体实现上添加
+2. **GORM 独立包** - 避免核心库强制依赖 GORM
+3. **ownsConnection 字段** - 简单直接的连接所有权标记
+
+### 质量验证
+
+| 检查项 | 结果 |
+|--------|------|
+| 代码审查 | ✅ 通过（可合并） |
+| 单元测试 | ✅ 全部通过 |
+| 回归测试 | ✅ 原有测试不受影响 |
+| 向后兼容 | ✅ 完全兼容 |
+
+### Git 提交记录
+
+```
+882e4ce docs(ai-team): add collaboration docs for ConnectWithDB feature
+859701a feat(driver): add ConnectWithDB and GORM adapter for external connections
+```
+
+### 后续操作
+
+1. **推送到远程**（可选）：
+   ```bash
+   git push origin master
+   ```
+
+2. **后续优化建议**（低优先级）：
+   - 可考虑添加 `OwnsConnection()` 查询方法
+   - 文档中说明每个 Driver 实例只应调用一次连接方法
+
+---
+
+*任务完成时间: 2026-02-03*
+*Leader: Claude Opus 4.5*
