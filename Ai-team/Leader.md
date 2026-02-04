@@ -146,3 +146,68 @@ func ConnectDriver(drv DBConnector, gormDB *gorm.DB) error
 
 *任务完成时间: 2026-02-03*
 *Leader: Claude Opus 4.5*
+
+---
+
+# 新任务：CLI version 和 upgrade 命令
+
+## 任务概述
+
+**任务**: 为 Migro CLI 增加 `version` 和 `upgrade` 两个命令
+**日期**: 2026-02-04
+
+---
+
+## 子任务拆解
+
+| 序号 | 子任务名称 | 负责角色 | 预期输出 | 状态 |
+|------|-----------|---------|---------|------|
+| 1 | 实现 version 命令 | Engineer | internal/cli/version.go | ✅ 完成 |
+| 2 | 实现 upgrade 命令 | Engineer | internal/cli/upgrade.go | ✅ 完成 |
+| 3 | 编写单元测试 | Tester | version_test.go, upgrade_test.go | ✅ 完成 |
+| 4 | 代码审查 | Code Reviewer | Ai-team/CodeReviewer.md | ✅ 完成 |
+| 5 | Git 提交 | Git Tool | Ai-team/GitTool.md | ⏳ 待执行 |
+
+---
+
+## 执行状态
+
+- [x] 1. Engineer - 代码实现 ✅ 完成
+- [x] 2. Tester - 测试验证 ✅ 完成
+- [x] 3. Code Reviewer - 代码审查 ✅ 完成 (可合并)
+- [ ] 4. Git Tool - Git 提交 ⏳ 待执行
+
+## 已完成工作
+
+### 1. 代码实现 (Engineer)
+
+**version 命令** (`internal/cli/version.go`):
+- 显示版本号、Git commit、构建日期
+- 显示 Go 版本和操作系统/架构信息
+- 支持通过 ldflags 注入版本信息
+
+**upgrade 命令** (`internal/cli/upgrade.go`):
+- 从 GitHub API 获取最新版本
+- 比较当前版本与最新版本
+- 支持 `--check` 标志仅检查更新
+- 使用 `go install` 执行升级
+
+### 2. 单元测试 (Tester)
+
+**测试覆盖**:
+- 7 个测试用例，15 个子测试
+- 全部通过
+
+**测试文件**:
+- `internal/cli/version_test.go`
+- `internal/cli/upgrade_test.go`
+
+---
+
+## 当前执行角色
+
+**Git Tool** - Git 提交
+
+---
+
+*更新时间: 2026-02-04*

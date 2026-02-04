@@ -2,14 +2,14 @@
 
 ## 审查概述
 
-**审查范围**: 新增 `ConnectWithDB` 和 GORM 适配 API
+**审查范围**: CLI 命令 `version` 和 `upgrade`
 **审查文件**:
-- `pkg/driver/mysql/driver.go`
-- `pkg/driver/postgres/driver.go`
-- `pkg/driver/sqlite/driver.go`
-- `pkg/driver/gorm/adapter.go` (新建)
+- `internal/cli/version.go` (新建)
+- `internal/cli/upgrade.go` (新建)
+- `internal/cli/version_test.go` (新建)
+- `internal/cli/upgrade_test.go` (新建)
 
-**审查日期**: 2026-02-03
+**审查日期**: 2026-02-04
 
 ---
 
@@ -18,131 +18,159 @@
 | 类别 | 数量 |
 |------|------|
 | 必须修改 | 0 |
-| 潜在风险 | 1 |
-| 优化建议 | 2 |
+| 潜在风险 | 2 |
+| 优化建议 | 3 |
 
 ---
 
 ## 详细审查
 
-### 1. 驱动代码改动 (mysql/postgres/sqlite)
+### 1. version.go
 
-#### 1.1 结构体变更
+#### 1.1 版本变量定义
 
 ```go
-type Driver struct {
-    db             *sql.DB
-    grammar        *Grammar
-    ownsConnection bool  // 新增
+var (
+    Version   = "dev"
+    GitCommit = "unknown"
+    BuildDate = "unknown"
+)
+```
+
+**评估**: ✅ 设计合理
+- 使用 `var` 而非 `const`，支持通过 `-ldflags` 注入
+- 默认值合理，便于开发调试
+
+#### 1.2 runVersion 函数
+
+```go
+func runVersion(cmd *cobra.Command, args []string) {
+    fmt.Printf("migro version %s\n", Version)
+    fmt.Printf("  Git commit: %s\n", GitCommit)
+    fmt.Printf("  Build date: %s\n", BuildDate)
+    fmt.Printf("  Go version: %s\n", runtime.Version())
+    fmt.Printf("  OS/Arch:    %s/%s\n", runtime.GOOS, runtime.GOARCH)
 }
 ```
 
-**评估**: ✅ 符合架构设计，字段命名清晰，语义明确。
-
-#### 1.2 Connect() 方法修改
-
-```go
-d.db = db
-d.ownsConnection = true  // 新增
-return nil
-```
-
-**评估**: ✅ 正确设置所有权标记，向后兼容。
-
-#### 1.3 Close() 方法修改
-
-```go
-func (d *Driver) Close() error {
-    if d.db != nil && d.ownsConnection {
-        return d.db.Close()
-    }
-    return nil
-}
-```
-
-**评估**: ✅ 正确实现条件关闭逻辑，原有行为不变。
-
-#### 1.4 ConnectWithDB() 方法
-
-```go
-func (d *Driver) ConnectWithDB(db *sql.DB) error {
-    if db == nil {
-        return fmt.Errorf("mysql: database connection is nil")
-    }
-
-    if err := db.Ping(); err != nil {
-        return fmt.Errorf("mysql: failed to ping database: %w", err)
-    }
-
-    d.db = db
-    d.ownsConnection = false
-    return nil
-}
-```
-
-**评估**:
-- ✅ nil 检查正确
-- ✅ Ping() 验证连接有效性
-- ✅ 正确设置 ownsConnection = false
-- ✅ 错误信息包含驱动名称前缀，便于定位
+**评估**: ✅ 实现简洁清晰
+- 输出格式规范，信息完整
+- 使用 `runtime` 包获取运行时信息
 
 ---
 
-### 2. GORM 适配包
+### 2. upgrade.go
 
-#### 2.1 DBConnector 接口
+#### 2.1 常量定义
 
 ```go
-type DBConnector interface {
-    ConnectWithDB(db *sql.DB) error
-}
+const (
+    repoOwner = "flyits"
+    repoName  = "migro"
+)
 ```
 
-**评估**: ✅ 接口设计简洁，仅暴露必要方法。
+**评估**: ✅ 正确使用常量
 
-#### 2.2 ConnectDriver 函数
+#### 2.2 getLatestVersion 函数
 
 ```go
-func ConnectDriver(drv DBConnector, gormDB *gorm.DB) error {
-    if drv == nil {
-        return fmt.Errorf("gorm: driver is nil")
-    }
-    if gormDB == nil {
-        return fmt.Errorf("gorm: gorm.DB is nil")
-    }
+func getLatestVersion() (*githubRelease, error) {
+    url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repoOwner, repoName)
 
-    sqlDB, err := gormDB.DB()
+    client := &http.Client{Timeout: 10 * time.Second}
+    resp, err := client.Get(url)
     if err != nil {
-        return fmt.Errorf("gorm: failed to get underlying *sql.DB: %w", err)
+        return nil, err
     }
-
-    return drv.ConnectWithDB(sqlDB)
+    defer resp.Body.Close()
+    // ...
 }
 ```
 
-**评估**:
-- ✅ 参数校验完整
-- ✅ 错误处理正确，使用 `%w` 包装错误
-- ✅ 文档注释清晰，包含使用示例
+**评估**: ✅ 实现正确
+- 设置了合理的超时时间 (10s)
+- 正确使用 `defer` 关闭响应体
+- 检查了 HTTP 状态码
+
+#### 2.3 doUpgrade 函数
+
+```go
+func doUpgrade() error {
+    goPath, err := exec.LookPath("go")
+    if err != nil {
+        return fmt.Errorf("go command not found: %w", err)
+    }
+
+    installCmd := exec.Command(goPath, "install", fmt.Sprintf("github.com/%s/%s/cmd/migro@latest", repoOwner, repoName))
+    installCmd.Stdout = os.Stdout
+    installCmd.Stderr = os.Stderr
+    installCmd.Env = append(os.Environ(), "GOPROXY=https://goproxy.cn,direct")
+    // ...
+}
+```
+
+**评估**: ✅ 实现合理
+- 使用 `exec.LookPath` 查找 go 命令
+- 正确设置 stdout/stderr
+- 设置了 GOPROXY 环境变量
+
+---
+
+### 3. 测试文件
+
+#### 3.1 version_test.go
+
+**评估**: ✅ 测试覆盖合理
+- 测试了版本变量默认值
+- 测试了命令注册
+
+#### 3.2 upgrade_test.go
+
+**评估**: ✅ 测试设计良好
+- 使用 table-driven tests
+- 覆盖了 JSON 解析、版本比较等核心逻辑
+- 测试了边界条件（空 JSON、无效 JSON）
 
 ---
 
 ## 【潜在风险】
 
-### 风险 1: 重复调用 Connect/ConnectWithDB
+### 风险 1: 包级变量 checkOnly 的并发问题
 
-**位置**: 所有驱动的 `Connect()` 和 `ConnectWithDB()` 方法
+**位置**: `upgrade.go:28`
 
-**描述**: 如果用户在同一个 Driver 实例上多次调用 `Connect()` 或 `ConnectWithDB()`，会覆盖之前的连接，可能导致：
-- 如果之前是自有连接 (`ownsConnection=true`)，旧连接不会被关闭，造成资源泄漏
-- 如果之前是借用连接 (`ownsConnection=false`)，行为正常但可能不符合用户预期
+```go
+var checkOnly bool
+```
+
+**描述**: `checkOnly` 是包级变量，如果在并发场景下（如测试并行执行）可能存在数据竞争。
 
 **风险等级**: 低
 
 **建议**:
-- 当前实现可接受，因为这是用户误用场景
-- 可在文档中说明：每个 Driver 实例只应调用一次连接方法
-- 如需严格防护，可在连接方法开头检查 `d.db != nil` 并返回错误
+- 当前 CLI 场景下不会并发执行，风险可接受
+- 如需改进，可将 flag 绑定到 cmd 的 local flags 并在 RunE 中获取
+
+**是否阻塞合并**: 否
+
+---
+
+### 风险 2: GOPROXY 硬编码为中国镜像
+
+**位置**: `upgrade.go:105`
+
+```go
+installCmd.Env = append(os.Environ(), "GOPROXY=https://goproxy.cn,direct")
+```
+
+**描述**: 硬编码使用中国镜像，对于非中国用户可能不是最优选择。
+
+**风险等级**: 低
+
+**建议**:
+- 可考虑仅在用户未设置 GOPROXY 时才添加默认值
+- 或提供 `--proxy` 参数让用户自定义
 
 **是否阻塞合并**: 否
 
@@ -150,39 +178,67 @@ func ConnectDriver(drv DBConnector, gormDB *gorm.DB) error {
 
 ## 【优化建议】
 
-### 建议 1: 统一错误消息格式
+### 建议 1: 版本比较逻辑可提取为独立函数
 
-**位置**: 各驱动的 `ConnectWithDB()` 方法
+**位置**: `upgrade.go:48-54`
 
 **当前实现**:
 ```go
-return fmt.Errorf("mysql: database connection is nil")
-return fmt.Errorf("mysql: failed to ping database: %w", err)
+currentVersion := strings.TrimPrefix(Version, "v")
+latestVersion := strings.TrimPrefix(latest.TagName, "v")
+
+if currentVersion == latestVersion {
+    // ...
+}
 ```
 
-**建议**: 错误消息格式已经统一，符合项目现有风格。无需修改。
+**建议**: 可提取为独立函数便于测试和复用：
+```go
+func isLatestVersion(current, latest string) bool {
+    return strings.TrimPrefix(current, "v") == strings.TrimPrefix(latest, "v")
+}
+```
 
 **优先级**: 低
 
 ---
 
-### 建议 2: 考虑添加 OwnsConnection() 方法
+### 建议 2: 考虑添加 User-Agent 请求头
 
-**描述**: 可考虑添加一个公开方法让用户查询连接所有权状态：
+**位置**: `upgrade.go:77-78`
+
+**当前实现**:
+```go
+client := &http.Client{Timeout: 10 * time.Second}
+resp, err := client.Get(url)
+```
+
+**建议**: GitHub API 建议设置 User-Agent：
+```go
+req, _ := http.NewRequest("GET", url, nil)
+req.Header.Set("User-Agent", "migro/"+Version)
+resp, err := client.Do(req)
+```
+
+**优先级**: 低
+
+---
+
+### 建议 3: Windows 下 GOOS 设置冗余
+
+**位置**: `upgrade.go:107-109`
 
 ```go
-func (d *Driver) OwnsConnection() bool {
-    return d.ownsConnection
+if runtime.GOOS == "windows" {
+    installCmd.Env = append(installCmd.Env, "GOOS=windows")
 }
 ```
 
-**理由**:
-- 便于调试和日志记录
-- 用户可在调用 Close() 前确认行为
+**描述**: 在 Windows 上运行时，`GOOS` 默认就是 `windows`，此设置冗余。
 
-**优先级**: 低（可作为后续增强）
+**建议**: 可移除此代码块，除非有特殊需求。
 
-**是否阻塞合并**: 否
+**优先级**: 低
 
 ---
 
@@ -195,13 +251,14 @@ func (d *Driver) OwnsConnection() bool {
 | nil 参数检查 | ✅ 通过 |
 | 错误处理 | ✅ 通过 |
 | 边界条件 | ✅ 通过 |
+| HTTP 状态码检查 | ✅ 通过 |
 
 ### 并发和资源管理
 
 | 检查项 | 结果 |
 |--------|------|
-| 并发安全 | ✅ 通过 (`ownsConnection` 仅初始化时写入) |
-| 资源泄漏 | ✅ 通过 (连接所有权正确管理) |
+| HTTP 响应体关闭 | ✅ 通过 (defer resp.Body.Close()) |
+| 超时设置 | ✅ 通过 (10s timeout) |
 | goroutine 泄漏 | ✅ 不涉及 |
 
 ### 可维护性
@@ -210,15 +267,7 @@ func (d *Driver) OwnsConnection() bool {
 |--------|------|
 | 代码清晰度 | ✅ 通过 |
 | 命名规范 | ✅ 通过 |
-| 注释完整性 | ✅ 通过 |
-
-### 向后兼容性
-
-| 检查项 | 结果 |
-|--------|------|
-| Driver 接口 | ✅ 未修改 |
-| 现有 API 行为 | ✅ 不变 |
-| 新增 API | ✅ 纯新增，不影响现有代码 |
+| 函数职责单一 | ✅ 通过 |
 
 ### 代码风格
 
@@ -228,6 +277,14 @@ func (d *Driver) OwnsConnection() bool {
 | 错误消息格式 | ✅ 统一 |
 | 导入顺序 | ✅ 正确 |
 
+### 测试质量
+
+| 检查项 | 结果 |
+|--------|------|
+| 测试覆盖核心逻辑 | ✅ 通过 |
+| 边界条件测试 | ✅ 通过 |
+| table-driven tests | ✅ 使用 |
+
 ---
 
 ## 【是否可以合并 + 原因】
@@ -236,18 +293,17 @@ func (d *Driver) OwnsConnection() bool {
 
 ### 原因:
 
-1. **功能正确**: 代码实现符合架构设计文档要求
-2. **向后兼容**: 不修改 Driver 接口，现有代码不受影响
-3. **错误处理完善**: 所有错误路径都有正确处理
-4. **并发安全**: 无并发风险
-5. **资源管理正确**: 连接所有权机制设计合理
-6. **代码质量高**: 代码清晰、命名规范、注释完整
-7. **无阻塞性问题**: 潜在风险为低优先级，不影响核心功能
+1. **功能正确**: version 和 upgrade 命令实现符合预期
+2. **错误处理完善**: HTTP 请求、命令执行等错误都有正确处理
+3. **资源管理正确**: HTTP 响应体正确关闭，设置了超时
+4. **代码质量高**: 代码清晰、命名规范、结构合理
+5. **测试覆盖**: 核心逻辑有单元测试覆盖
+6. **无阻塞性问题**: 潜在风险均为低优先级
 
 ### 合并前建议:
 
-1. 确保单元测试覆盖新增 API
-2. 在 API 文档中说明连接所有权语义
+1. 确认 GitHub 仓库已创建 release（否则 upgrade --check 会返回 404）
+2. 构建时通过 ldflags 注入正确的版本信息
 
 ---
 
@@ -255,9 +311,9 @@ func (d *Driver) OwnsConnection() bool {
 
 - [x] 代码审查完成
 - [x] 审查报告已输出
-- [ ] 等待测试验证
+- [x] 测试验证通过
 - [ ] 等待合并
 
 ---
 
-*Code Reviewer 完成时间: 2026-02-03*
+*Code Reviewer 完成时间: 2026-02-04*
