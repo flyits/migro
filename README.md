@@ -1,6 +1,12 @@
 # Migro
 
+[![Version](https://img.shields.io/badge/version-v0.0.3-blue.svg)](https://github.com/flyits/migro/releases/tag/v0.0.3)
+[![Go Version](https://img.shields.io/badge/go-%3E%3D1.21-blue.svg)](https://golang.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 **Migro** 是一个 Go 语言数据库迁移工具，对标 PHP Laravel 框架的迁移功能，提供极优雅、极大方便、极度简化的数据库迁移体验。
+
+> 📋 查看 [CHANGELOG.md](CHANGELOG.md) 了解版本更新历史
 
 ## 特性
 
@@ -228,6 +234,46 @@ migro refresh [flags]
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `--force` | 跳过确认提示 | false |
+
+---
+
+### migro version
+
+显示版本信息。
+
+```bash
+migro version
+```
+
+**输出示例：**
+```
+migro version v0.0.3
+  Git commit: 7737a98
+  Build date: 2026-02-04T10:30:00Z
+  Go version: go1.21.0
+  OS/Arch:    linux/amd64
+```
+
+---
+
+### migro upgrade
+
+检查并升级到最新版本。
+
+```bash
+migro upgrade [flags]
+```
+
+**参数：**
+| 参数 | 说明 | 默认值 |
+|------|------|--------|
+| `--check` | 仅检查更新，不安装 | false |
+
+**示例：**
+```bash
+migro upgrade           # 检查并升级到最新版本
+migro upgrade --check   # 仅检查是否有新版本
+```
 
 ---
 
