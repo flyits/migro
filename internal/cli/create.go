@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/flyits/migro/internal/config"
 	"github.com/spf13/cobra"
@@ -69,6 +70,23 @@ func runCreate(cmd *cobra.Command, args []string) error {
 }
 
 func toSnakeCase(s string) string {
+	// Replace special characters with underscores
+	// This handles version numbers (v1.4.6), hyphenated names (v2.0.0-beta), etc.
+	var normalized strings.Builder
+	for _, r := range s {
+		switch {
+		case r == '.' || r == '-' || r == ' ':
+			normalized.WriteRune('_')
+		case unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_':
+			normalized.WriteRune(r)
+		default:
+			// Skip other special characters
+			normalized.WriteRune('_')
+		}
+	}
+	s = normalized.String()
+
+	// Convert camelCase to snake_case
 	var result strings.Builder
 	for i, r := range s {
 		if i > 0 && r >= 'A' && r <= 'Z' {
@@ -76,7 +94,16 @@ func toSnakeCase(s string) string {
 		}
 		result.WriteRune(r)
 	}
-	return strings.ToLower(result.String())
+
+	// Clean up multiple consecutive underscores
+	output := strings.ToLower(result.String())
+	for strings.Contains(output, "__") {
+		output = strings.ReplaceAll(output, "__", "_")
+	}
+	// Trim leading/trailing underscores
+	output = strings.Trim(output, "_")
+
+	return output
 }
 
 func extractTableName(name string) string {
@@ -155,8 +182,12 @@ func toCamelCase(s string) string {
 	var result strings.Builder
 	for _, part := range parts {
 		if len(part) > 0 {
-			result.WriteString(strings.ToUpper(string(part[0])))
-			result.WriteString(part[1:])
+			runes := []rune(part)
+			// Capitalize first rune (handles Unicode correctly)
+			result.WriteRune(unicode.ToUpper(runes[0]))
+			if len(runes) > 1 {
+				result.WriteString(string(runes[1:]))
+			}
 		}
 	}
 	return result.String()
